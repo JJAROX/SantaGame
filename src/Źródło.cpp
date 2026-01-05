@@ -55,7 +55,7 @@ void setSpeed(int poziom, float& predkosc_mikolaj_y, float& predkosc_prezent_x, 
 }
 float predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x;
 
-enum StanGry {MENU, ROZGRYWKA};
+enum StanGry { MENU, ROZGRYWKA };
 
 int main() {
     srand(time(NULL));
@@ -66,6 +66,7 @@ int main() {
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     int poziom = 1;
     int punkty = 0;
+    int hp = 3;
     //tla i skala
     std::vector<sf::Texture> tla;
     sf::Texture grafika;
@@ -133,9 +134,9 @@ int main() {
     tekst_punktow.setStyle(sf::Text::Bold);
 
     // przyciski w menu
-    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "USTAWIENIA", "WYJDZ"};
+    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "USTAWIENIA", "WYJDZ" };
     std::vector<sf::Text> przyciski;
-    
+
     for (int i = 0; i < nazwyPrzycisków.size(); i++) {
         sf::Text p;
         p.setFont(czcionka_game);
@@ -155,10 +156,10 @@ int main() {
         p.setPosition(szerokosc_okna / 2.0f, (wysokosc_okna / 2.0f) + offsetY);
 
         przyciski.push_back(p);
-    } 
+    }
 
     // ustawienie stanu gry na menu
-    
+
     StanGry aktualnyStan = MENU;
 
     //napis przy lataniu za nisko
@@ -231,15 +232,23 @@ int main() {
         std::cout << "nie zaladowano tekstury wykrzyknika" << std::endl;
         return 1;
     }
+    //tekstury serc
+    sf::Texture serce;
+    sf::Texture puste_serce;
+    serce.loadFromFile("serce_pelne.png");
+    puste_serce.loadFromFile("serce_puste.png");
+
 
     //czasy
     sf::Clock clock;
     sf::Clock cooldown;
     sf::Clock cooldown_domku;
     sf::Clock cooldown_fajerwerek;
+    sf::Clock cooldown_dmg;
     float cooldown_prezent = 1.0f;
     float cooldown_resp_domku = 3.5f;
     float cooldown_resp_fajerwerek = 5.0f;
+    float czas_nietykalnosci = 1.0f;
 
     // mikolaj
     m k1 = { 300.0f, 120.0f };
@@ -266,6 +275,9 @@ int main() {
 
     //wykrzykniki
     std::vector<ostrzerzenie> ostrzerzenia;
+
+    //serca
+    std::vector<sf::Sprite> serca;
 
     while (window.isOpen())
     {
@@ -305,7 +317,7 @@ int main() {
                 // hover na button
                 if (p.getGlobalBounds().contains(mousePosF)) {
                     p.setFillColor(sf::Color::Yellow);
-                    p.setScale(1.1f, 1.1f); 
+                    p.setScale(1.1f, 1.1f);
                 }
                 else {
                     p.setFillColor(sf::Color::White);
@@ -313,11 +325,16 @@ int main() {
                 }
                 window.draw(p);
             }
-            
+
         }
         else if (aktualnyStan == ROZGRYWKA) {
             // --- ROZGRYWKA ---
 
+            //wyjscie do menu(pozdro Juras)
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
+                aktualnyStan = MENU;
+            }
             float dt = clock.restart().asSeconds();
             //cala mechnika tla(ruch i zapetlanie)
 
@@ -550,6 +567,23 @@ int main() {
                     }),
                 fajerwerki.end()
             );
+            //rysowanie serc z odpowiednią teksturą
+            for (int i = 0;i < 3;i++)
+            {
+                sf::Sprite s;
+                if (hp >= i + 1)
+                {
+                    s.setTexture(serce);
+                }
+                else
+                {
+                    s.setTexture(puste_serce);
+                }
+                sf::Vector2u serceSize = serce.getSize();
+                s.setScale(40.0f / serceSize.x, 40.0f / serceSize.y);
+                s.setPosition(szerokosc_okna-(i+1)*50.0f, 20.0f);
+                serca.push_back(s);
+            }
 
             //koniec programu
             if (window.hasFocus())
@@ -561,12 +595,26 @@ int main() {
             window.draw(tlo1);
             window.draw(tlo2);
 
-            //wyswietlanie napisu podczas kolizji
-            for (auto& f : fajerwerki) {
-                if (mikolaj.getGlobalBounds().intersects(f.getGlobalBounds())) {
-                    window.draw(napis_kolizja);
-                    break;
+            //odejmowanie hp podczas kolizji
+            for (auto it = fajerwerki.begin();it != fajerwerki.end();)
+            {
+                if (mikolaj.getGlobalBounds().intersects((*it).getGlobalBounds()))
+                {
+                    if(cooldown_dmg.getElapsedTime().asSeconds()>=czas_nietykalnosci)
+                    {
+                        hp--;
+                        cooldown_dmg.restart();
+                    }
+                    it = fajerwerki.erase(it);
                 }
+                else
+                {
+                    it++;
+                }
+            }
+            if (hp == 0)
+            {
+                aktualnyStan = MENU;
             }
 
             // rysowanie wszystkich prezentów
@@ -584,6 +632,9 @@ int main() {
                 window.draw(f);
             //for (auto& h : hitboxy)
             //  window.draw(h);
+            // rysowanie serc
+            for (auto& s : serca)
+                window.draw(s);
             if (newPos.y + bounds.height == wysokosc_okna * 0.6f)
                 window.draw(napis_lot);
             window.draw(mikolaj);
@@ -591,7 +642,7 @@ int main() {
             window.draw(tekst_punktow);
         }
 
-        
+
         window.display();
     }
 }
