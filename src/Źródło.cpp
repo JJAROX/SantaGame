@@ -19,6 +19,13 @@ struct zakres
     float start;
     float koniec;
 };
+struct Poziom
+{
+    sf::RectangleShape ramka;
+    sf::Sprite obrazek;
+    int numer_poziomu;
+    /*bool odblokowany;*/ // na razie komentuje po nwm czy dojdziemy do tego etapu ale mozna by bylo poziomy odblokowywac
+};
 
 //do wektorow(!!!dla kciuka!!!) - kazdy indeks to nowy poziom, jak chcesz zmienic predkosc jakiegos obiektu to tutaj
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -55,7 +62,7 @@ void setSpeed(int poziom, float& predkosc_mikolaj_y, float& predkosc_prezent_x, 
 }
 float predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x;
 
-enum StanGry { MENU, ROZGRYWKA };
+enum StanGry { MENU, ROZGRYWKA, POZIOMY };
 
 int main() {
     srand(time(NULL));
@@ -69,19 +76,18 @@ int main() {
     int hp = 3;
     //tla i skala
     std::vector<sf::Texture> tla;
+    std::vector<std::string> nazwy_tel = { "Europa.png" , "Afryka.png" , "menu.png" };
     sf::Texture grafika;
-    grafika.loadFromFile("Europa.png");
-    tla.push_back(grafika);
-    grafika.loadFromFile("Afryka.png");
-    tla.push_back(grafika);
-    grafika.loadFromFile("menu.png");
-    tla.push_back(grafika);
+    for (int i = 0; i < nazwy_tel.size(); i++) {
+        grafika.loadFromFile(nazwy_tel[i]);
+        tla.push_back(grafika);
+    }
     /*
     grafika.loadFromFile("Ameryka.png");
     tla.push_back(grafika);
     grafika.loadFromFile("Azja.png");
     tla.push_back(grafika);
-    grafika.loadFromFile("Biegun.png");
+    grafika.loadFromFile("Biegun.png"); // O BOZE ALAAAAAAA ❤❤❤
     tla.push_back(grafika);*/
 
     sf::Sprite tlo1, tlo2, tlo_menu;
@@ -103,6 +109,42 @@ int main() {
     );
 
     setSpeed(poziom, predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x);
+
+    // Poziomy
+    std::vector<Poziom> Poziomy;
+    int kolumny = 3;
+    int wiersze = 2;
+    float margin = 50.f;
+    float szerokosc_poziomu = 250.f;
+    float wysokosc_poziomu = 180.f;
+    for (int i = 0; i < 6; i++) {
+        Poziom p;
+        p.numer_poziomu = i + 1;
+
+        // ramka
+        p.ramka.setSize(sf::Vector2f(szerokosc_poziomu, wysokosc_poziomu));
+        p.ramka.setOutlineThickness(5.0f);
+        p.ramka.setOutlineColor(sf::Color::White);
+        p.ramka.setFillColor(sf::Color(50, 50, 50));
+
+        // img pod poziom
+        if (i < tla.size()) {
+            p.obrazek.setTexture(tla[i]);
+            sf::Vector2u texSize = tla[i].getSize();
+            p.obrazek.setScale(szerokosc_poziomu / texSize.x, wysokosc_poziomu / texSize.y);
+        }
+
+        // grid 
+        int kol = i % kolumny;
+        int rzad = i / kolumny;
+        float posX = (szerokosc_okna / 2.0f - (kolumny * (szerokosc_poziomu + margin)) / 2.0f) + kol * (szerokosc_poziomu + margin);
+        float posY = (wysokosc_okna / 2.0f - (wiersze * (wysokosc_poziomu + margin)) / 2.0f) + rzad * (wysokosc_poziomu + margin);
+        p.ramka.setPosition(posX, posY);
+        p.obrazek.setPosition(posX, posY);
+        Poziomy.push_back(p);
+    }
+
+
     //tekstura mikolaja
     sf::Texture tekstura_mikolaj;
     if (!tekstura_mikolaj.loadFromFile("mikolajp1.png"))
@@ -134,7 +176,7 @@ int main() {
     tekst_punktow.setStyle(sf::Text::Bold);
 
     // przyciski w menu
-    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "USTAWIENIA", "WYJDZ" };
+    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "POZIOMY", "WYJDZ" };
     std::vector<sf::Text> przyciski;
 
     for (int i = 0; i < nazwyPrzycisków.size(); i++) {
@@ -157,6 +199,18 @@ int main() {
 
         przyciski.push_back(p);
     }
+
+    // przycisk w poziomy 
+    sf::Text poziomExit;
+    poziomExit.setFont(czcionka_game);
+    poziomExit.setString("WROC DO MENU");
+    poziomExit.setCharacterSize(50);
+    poziomExit.setFillColor(sf::Color::White);
+    poziomExit.setOutlineColor(sf::Color::Red);
+    poziomExit.setOutlineThickness(2.0f);
+    sf::FloatRect bounds = poziomExit.getLocalBounds();
+    poziomExit.setOrigin(0,0);
+    poziomExit.setPosition(20.0f, 20.0f);
 
     // ustawienie stanu gry na menu
 
@@ -200,27 +254,28 @@ int main() {
     //tekstury domkow
     std::vector<sf::Texture> tekstury_domkow;
     sf::Texture t1;
-    t1.loadFromFile("dom1.png");
-    tekstury_domkow.push_back(t1);
-    t1.loadFromFile("dom2.png");
-    tekstury_domkow.push_back(t1);
-    t1.loadFromFile("dom3.png");
-    tekstury_domkow.push_back(t1);
-    t1.loadFromFile("dom4.png");
-    tekstury_domkow.push_back(t1);
-    t1.loadFromFile("dom5.png");
-    tekstury_domkow.push_back(t1);
+    std::vector<std::string> obrazki_domkow = { "dom1.png", "dom2.png","dom3.png" ,"dom4.png" ,"dom5.png" };
+    for (int i = 0; i < obrazki_domkow.size(); i++) {
+        t1.loadFromFile(obrazki_domkow[i]);
+        tekstury_domkow.push_back(t1);
+    }
 
 
     //tekstury fajerwerek
+    std::vector<std::string> obrazki_fajerwerkow = { "fajerwerek1.png", "fajerwerek2.png","fajerwerek3.png" };
     std::vector<sf::Texture> tekstury_fajerwerek;
-    sf::Texture f1, f2, f3;
-    f1.loadFromFile("fajerwerek1.png");
+    
+    for(auto& obrazek : obrazki_fajerwerkow){
+        sf::Texture tekstura;
+        tekstura.loadFromFile(obrazek);
+        tekstury_fajerwerek.push_back(tekstura);
+    }
+    /*f1.loadFromFile("fajerwerek1.png");
     f2.loadFromFile("fajerwerek2.png");
     f3.loadFromFile("fajerwerek3.png");
     tekstury_fajerwerek.push_back(f1);
     tekstury_fajerwerek.push_back(f2);
-    tekstury_fajerwerek.push_back(f3);
+    tekstury_fajerwerek.push_back(f3);*/
 
     //tekstura wykrzyknika
     sf::Texture tekstura_wykrzyknik;
@@ -283,7 +338,7 @@ int main() {
     {
         sf::Event event;
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-        sf::Vector2f mousePosF(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
+        sf::Vector2f mousePosF = window.mapPixelToCoords(mousePos);
 
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
@@ -294,14 +349,37 @@ int main() {
                     for (int i = 0; i < przyciski.size(); i++) {
                         if (przyciski[i].getGlobalBounds().contains(mousePosF)) {
                             if (i == 0) { // pierwszy przycisk: ZAGRAJ
+                                hp = 3;
+                                punkty = 0;
+                                mikolaj.setPosition(szerokosc_okna / 8, wysokosc_okna / 3);
+                                prezenty.clear();
+                                domki.clear();
+                                hitboxy.clear();
+                                fajerwerki.clear();
+                                ostrzerzenia.clear();
+                                serca.clear();
+                                tlo1_x = 0.0f;
+                                tlo2_x = szerokosc_tla;
                                 aktualnyStan = ROZGRYWKA;
                                 clock.restart();
+                                cooldown_domku.restart();
+                                cooldown_fajerwerek.restart();
+                            }
+                            else if (i == 1) {
+                                aktualnyStan = POZIOMY;
                             }
                             else if (i == przyciski.size() - 1) { // ostatni przycisk: WYJDZ
                                 window.close();
                             }
                         }
                     }
+                }
+            }
+            else if (aktualnyStan == POZIOMY) {
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                        if (poziomExit.getGlobalBounds().contains(mousePosF)) {
+                            aktualnyStan = MENU;
+                        }
                 }
             }
         }
@@ -325,6 +403,33 @@ int main() {
                 }
                 window.draw(p);
             }
+
+        }
+        else if (aktualnyStan == POZIOMY) {
+            // --- POZIOMY ---
+
+            window.draw(tlo_menu);
+            for (auto& p : Poziomy) {
+                // hover na ramkę
+                if (p.ramka.getGlobalBounds().contains(mousePosF)) {
+                    p.ramka.setOutlineColor(sf::Color::Yellow);
+                }
+                else {
+                    p.ramka.setOutlineColor(sf::Color::White);
+                }
+
+                window.draw(p.ramka);
+                window.draw(p.obrazek);
+            }
+            if (poziomExit.getGlobalBounds().contains(mousePosF)) {
+                poziomExit.setFillColor(sf::Color::Yellow);
+                poziomExit.setScale(1.1f, 1.1f);
+            }
+            else {
+                poziomExit.setFillColor(sf::Color::White);
+                poziomExit.setScale(1.0f, 1.0f);
+            }
+            window.draw(poziomExit);
 
         }
         else if (aktualnyStan == ROZGRYWKA) {
@@ -568,7 +673,8 @@ int main() {
                 fajerwerki.end()
             );
             //rysowanie serc z odpowiednią teksturą
-            for (int i = 0;i < 3;i++)
+            serca.clear();
+            for (int i = 0; i < 3; i++)
             {
                 sf::Sprite s;
                 if (hp >= i + 1)
@@ -581,7 +687,7 @@ int main() {
                 }
                 sf::Vector2u serceSize = serce.getSize();
                 s.setScale(40.0f / serceSize.x, 40.0f / serceSize.y);
-                s.setPosition(szerokosc_okna-(i+1)*50.0f, 20.0f);
+                s.setPosition(szerokosc_okna - (i + 1) * 50.0f, 20.0f);
                 serca.push_back(s);
             }
 
@@ -596,11 +702,11 @@ int main() {
             window.draw(tlo2);
 
             //odejmowanie hp podczas kolizji
-            for (auto it = fajerwerki.begin();it != fajerwerki.end();)
+            for (auto it = fajerwerki.begin(); it != fajerwerki.end();)
             {
                 if (mikolaj.getGlobalBounds().intersects((*it).getGlobalBounds()))
                 {
-                    if(cooldown_dmg.getElapsedTime().asSeconds()>=czas_nietykalnosci)
+                    if (cooldown_dmg.getElapsedTime().asSeconds() >= czas_nietykalnosci)
                     {
                         hp--;
                         cooldown_dmg.restart();
