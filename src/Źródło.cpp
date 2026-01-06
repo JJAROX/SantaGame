@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 
+enum StanGry { MENU, ROZGRYWKA, POZIOMY };
+
 struct m
 {
     float szerokosc;
@@ -61,9 +63,35 @@ void setSpeed(int poziom, float& predkosc_mikolaj_y, float& predkosc_prezent_x, 
         std::cout << "za duzy index, cos jest nie tak z poziomami" << std::endl;
     }
 }
+void resetGierki(
+    int& hp, int& punkty, sf::Sprite& mikolaj,
+    std::vector<sf::Sprite>& prezenty, std::vector<sf::Sprite>& domki,
+    std::vector<sf::RectangleShape>& hitboxy, std::vector<sf::Sprite>& fajerwerki,
+    std::vector<ostrzerzenie>& ostrzerzenia, std::vector<sf::Sprite>& serca,
+    float& tlo1_x, float& tlo2_x, float szerokosc_tla,
+    StanGry& aktualnyStan, sf::Clock& clock,
+    sf::Clock& cooldown_domku, sf::Clock& cooldown_fajerwerek,
+    int szerokosc_okna, int wysokosc_okna
+) {
+    hp = 3;
+    punkty = 0;
+    mikolaj.setPosition(szerokosc_okna / 8.0f, wysokosc_okna / 3.0f);
+    prezenty.clear();
+    domki.clear();
+    hitboxy.clear();
+    fajerwerki.clear();
+    ostrzerzenia.clear();
+    serca.clear();
+    tlo1_x = 0.0f;
+    tlo2_x = szerokosc_tla;
+    aktualnyStan = ROZGRYWKA;
+    clock.restart();
+    cooldown_domku.restart();
+    cooldown_fajerwerek.restart();
+}
 float predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x;
 
-enum StanGry { MENU, ROZGRYWKA, POZIOMY };
+
 //tekstury
 int main() {
     srand(time(NULL));
@@ -235,9 +263,9 @@ int main() {
         sf::Texture tekstura;
         tekstura.loadFromFile(obrazek);
         tekstura_prezentu.push_back(tekstura);
-        
+
     }
-    
+
     //sprawdzenie czy załadowało to chyba trzeba usunąć??? (działa bez tego bo sprawdziłem)
     /* {
         char buffer[MAX_PATH];
@@ -345,21 +373,7 @@ int main() {
                     for (int i = 0; i < przyciski.size(); i++) {
                         if (przyciski[i].getGlobalBounds().contains(mousePosF)) {
                             if (i == 0) { // pierwszy przycisk: ZAGRAJ
-                                hp = 3;
-                                punkty = 0;
-                                mikolaj.setPosition(szerokosc_okna / 8, wysokosc_okna / 3);
-                                prezenty.clear();
-                                domki.clear();
-                                hitboxy.clear();
-                                fajerwerki.clear();
-                                ostrzerzenia.clear();
-                                serca.clear();
-                                tlo1_x = 0.0f;
-                                tlo2_x = szerokosc_tla;
-                                aktualnyStan = ROZGRYWKA;
-                                clock.restart();
-                                cooldown_domku.restart();
-                                cooldown_fajerwerek.restart();
+                                resetGierki(hp, punkty, mikolaj, prezenty, domki, hitboxy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna);
                             }
                             else if (i == 1) {
                                 aktualnyStan = POZIOMY;
@@ -375,6 +389,16 @@ int main() {
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (poziomExit.getGlobalBounds().contains(mousePosF)) {
                         aktualnyStan = MENU;
+                    }
+                    for (auto& p : Poziomy) {
+                        if (p.ramka.getGlobalBounds().contains(mousePosF)) {
+                            poziom = p.numer_poziomu;
+                            tlo1.setTexture(tla[poziom - 1]);
+                            tlo2.setTexture(tla[poziom - 1]);
+                            setSpeed(poziom, predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x);
+                            resetGierki(hp, punkty, mikolaj, prezenty, domki, hitboxy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna);
+
+                        }
                     }
                 }
             }
@@ -503,7 +527,7 @@ int main() {
                     float prezentScaleY = 70.0f / prezent_Size.y;
                     nowy.setScale(prezentScaleX, prezentScaleY);
 
-                    nowy.setPosition(pos.x,pos.y+53.0f);
+                    nowy.setPosition(pos.x, pos.y + 53.0f);
 
 
                     prezenty.push_back(nowy);
@@ -749,4 +773,6 @@ int main() {
 
         window.display();
     }
-}
+
+    return 0;
+} 
