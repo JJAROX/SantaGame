@@ -228,15 +228,24 @@ int main() {
     napis_lot.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.5f);
 
     //tekstura prezentu
-    sf::Texture tekstura_prezentu;
-    if (!tekstura_prezentu.loadFromFile("prezent.png"))
-    {
+    std::vector<std::string> obrazki_prezentow = { "prezent1.png", "prezent2.png","prezent3.png","prezent4.png","prezent5.png","prezent6.png","prezent7.png","prezent8.png" };
+    std::vector<sf::Texture> tekstura_prezentu;
+
+    for (auto& obrazek : obrazki_prezentow) {
+        sf::Texture tekstura;
+        tekstura.loadFromFile(obrazek);
+        tekstura_prezentu.push_back(tekstura);
+        
+    }
+    
+    //sprawdzenie czy załadowało to chyba trzeba usunąć??? (działa bez tego bo sprawdziłem)
+    /* {
         char buffer[MAX_PATH];
         GetCurrentDirectoryA(MAX_PATH, buffer);
         std::cout << buffer << std::endl;
         std::cout << "nie zaladowano tekstury prezentu" << std::endl;
         return 1;
-    }
+    }*/
 
     //tekstury domkow
     std::vector<sf::Texture> tekstury_domkow;
@@ -486,9 +495,10 @@ int main() {
                     cooldown.getElapsedTime().asSeconds() >= cooldown_prezent)
                 {
                     sf::Sprite nowy;
-                    nowy.setTexture(tekstura_prezentu);
+                    int index = rand() % 8;
+                    nowy.setTexture(tekstura_prezentu[index]);
 
-                    sf::Vector2u prezent_Size = tekstura_prezentu.getSize();
+                    sf::Vector2u prezent_Size = tekstura_prezentu[index].getSize();
                     float prezentScaleX = 70.0f / prezent_Size.x;
                     float prezentScaleY = 70.0f / prezent_Size.y;
                     nowy.setScale(prezentScaleX, prezentScaleY);
