@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <vector>
 #include <algorithm>
+
 struct m
 {
     float szerokosc;
@@ -37,12 +38,12 @@ std::vector<float> predkosci_domek = { 100.0f,100.0f,100.0f,100.0f,100.0f,100.0f
 std::vector<float> predkosci_fajerwerki_x = { 400.0f,400.0f,400.0f,400.0f,400.0f,400.0f };
 std::vector<zakres> zakresy_kominow =
 {
-    {0.20f, 0.33f}, // dom1
-    {0.70f, 0.85f}, // dom2
-    {0.75f, 0.91f}, // dom3
-    {0.34f, 0.51f}, // dom4
-    {0.76f, 0.94f}  // dom5
+    {0.23f, 0.39f}, // dom1
+    {0.67f, 0.85f}, // dom2
+    {0.73f, 0.92f}, // dom3
+    {0.62f, 0.88f}  // dom4
 };
+std::vector<int> ilosc_fajerwerek = { 2,2,3,3,3 };
 int wysokosc_hitboxa = 10.0f;
 void setSpeed(int poziom, float& predkosc_mikolaj_y, float& predkosc_prezent_x, float& predkosc_prezent_y, float& predkosc_domek_x, float& predkosc_fajerwerek_x)
 {
@@ -63,7 +64,7 @@ void setSpeed(int poziom, float& predkosc_mikolaj_y, float& predkosc_prezent_x, 
 float predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x;
 
 enum StanGry { MENU, ROZGRYWKA, POZIOMY };
-
+//tekstury
 int main() {
     srand(time(NULL));
     int szerokosc_okna = 1200;
@@ -155,13 +156,7 @@ int main() {
         std::cout << "nie zaladowano tekstury mikolaja" << std::endl;
         return 1;
     }
-    sf::Font czcionka_arial;
     sf::Font czcionka_game;
-    if (!czcionka_arial.loadFromFile("arial.ttf"))
-    {
-        std::cout << "blad ladowania czcionki" << std::endl;
-        return 1;
-    }
     if (!czcionka_game.loadFromFile("ByteBounce.ttf"))
     {
         std::cout << "blad ladowania czcionki" << std::endl;
@@ -169,10 +164,10 @@ int main() {
     }
     //punkty
     sf::Text tekst_punktow;
-    tekst_punktow.setFont(czcionka_arial);
-    tekst_punktow.setCharacterSize(30);       // rozmiar czcionki
+    tekst_punktow.setFont(czcionka_game);
+    tekst_punktow.setCharacterSize(120);       // rozmiar czcionki
     tekst_punktow.setFillColor(sf::Color::Yellow); // kolor tekstu
-    tekst_punktow.setPosition(20.0f, 20.0f);  // pozycja w lewym górnym rogu
+    tekst_punktow.setPosition(20.0f,-25.0f);  // pozycja w lewym górnym rogu
     tekst_punktow.setStyle(sf::Text::Bold);
 
     // przyciski w menu
@@ -194,7 +189,7 @@ int main() {
         sf::FloatRect bounds = p.getLocalBounds();
         p.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
 
-        float offsetY = i * 75.0f;
+        float offsetY = (i-1) * 130.0f;
         p.setPosition(szerokosc_okna / 2.0f, (wysokosc_okna / 2.0f) + offsetY);
 
         przyciski.push_back(p);
@@ -204,13 +199,13 @@ int main() {
     sf::Text poziomExit;
     poziomExit.setFont(czcionka_game);
     poziomExit.setString("WROC DO MENU");
-    poziomExit.setCharacterSize(50);
+    poziomExit.setCharacterSize(100);
     poziomExit.setFillColor(sf::Color::White);
     poziomExit.setOutlineColor(sf::Color::Red);
-    poziomExit.setOutlineThickness(2.0f);
-    sf::FloatRect bounds = poziomExit.getLocalBounds();
-    poziomExit.setOrigin(0,0);
-    poziomExit.setPosition(20.0f, 20.0f);
+    poziomExit.setOutlineThickness(3.0f);
+    sf::FloatRect szerokosc_exit = poziomExit.getLocalBounds();
+    poziomExit.setOrigin(szerokosc_exit.left + szerokosc_exit.width / 2.0f, szerokosc_exit.top + szerokosc_exit.height / 2.0f);
+    poziomExit.setPosition(szerokosc_okna*0.5f, wysokosc_okna*0.85f);
 
     // ustawienie stanu gry na menu
 
@@ -218,12 +213,12 @@ int main() {
 
     //napis przy lataniu za nisko
     sf::Text napis_lot;
-    napis_lot.setFont(czcionka_arial);
-    napis_lot.setString("uwazaj, przypierdolisz komus w komin");
-    napis_lot.setCharacterSize(30);
+    napis_lot.setFont(czcionka_game);
+    napis_lot.setString("UWAZAJ LECISZ ZA NISKO");
+    napis_lot.setCharacterSize(70);
     napis_lot.setFillColor(sf::Color::White);
 
-    //ustawianie napisu na srodku(giga chujnia)
+    //ustawianie napisu na srodku
     sf::FloatRect textBounds = napis_lot.getLocalBounds();
     napis_lot.setOrigin(
         textBounds.left + textBounds.width / 2.0f,
@@ -231,14 +226,6 @@ int main() {
     );
 
     napis_lot.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.5f);
-
-    //napis przy kolizji mikolaja z fajerwerka
-    sf::Text napis_kolizja;
-    napis_kolizja.setFont(czcionka_arial);
-    napis_kolizja.setString("no i chuj,\nswiat nie bedzie");
-    napis_kolizja.setCharacterSize(30);
-    napis_kolizja.setFillColor(sf::Color::Red);
-    napis_kolizja.setPosition(szerokosc_okna - 300, 40);
 
     //tekstura prezentu
     sf::Texture tekstura_prezentu;
@@ -254,7 +241,7 @@ int main() {
     //tekstury domkow
     std::vector<sf::Texture> tekstury_domkow;
     sf::Texture t1;
-    std::vector<std::string> obrazki_domkow = { "dom1.png", "dom2.png","dom3.png" ,"dom4.png" ,"dom5.png" };
+    std::vector<std::string> obrazki_domkow = { "dom1.png", "dom2.png","dom3.png" ,"dom4.png"  };
     for (int i = 0; i < obrazki_domkow.size(); i++) {
         t1.loadFromFile(obrazki_domkow[i]);
         tekstury_domkow.push_back(t1);
@@ -264,8 +251,8 @@ int main() {
     //tekstury fajerwerek
     std::vector<std::string> obrazki_fajerwerkow = { "fajerwerek1.png", "fajerwerek2.png","fajerwerek3.png" };
     std::vector<sf::Texture> tekstury_fajerwerek;
-    
-    for(auto& obrazek : obrazki_fajerwerkow){
+
+    for (auto& obrazek : obrazki_fajerwerkow) {
         sf::Texture tekstura;
         tekstura.loadFromFile(obrazek);
         tekstury_fajerwerek.push_back(tekstura);
@@ -306,7 +293,7 @@ int main() {
     float czas_nietykalnosci = 1.0f;
 
     // mikolaj
-    m k1 = { 300.0f, 120.0f };
+    m k1 = { 365.0f, 155.0f };
     sf::Sprite mikolaj;
     mikolaj.setTexture(tekstura_mikolaj);
     sf::Vector2u texSize = tekstura_mikolaj.getSize();
@@ -331,7 +318,7 @@ int main() {
     //wykrzykniki
     std::vector<ostrzerzenie> ostrzerzenia;
 
-    //serca
+    //serca dodawanie odejmowanie i punkty
     std::vector<sf::Sprite> serca;
 
     while (window.isOpen())
@@ -377,9 +364,9 @@ int main() {
             }
             else if (aktualnyStan == POZIOMY) {
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                        if (poziomExit.getGlobalBounds().contains(mousePosF)) {
-                            aktualnyStan = MENU;
-                        }
+                    if (poziomExit.getGlobalBounds().contains(mousePosF)) {
+                        aktualnyStan = MENU;
+                    }
                 }
             }
         }
@@ -395,11 +382,11 @@ int main() {
                 // hover na button
                 if (p.getGlobalBounds().contains(mousePosF)) {
                     p.setFillColor(sf::Color::Yellow);
-                    p.setScale(1.1f, 1.1f);
+                    p.setScale(1.7f, 1.7f);
                 }
                 else {
                     p.setFillColor(sf::Color::White);
-                    p.setScale(1.0f, 1.0f);
+                    p.setScale(1.5f, 1.5f);
                 }
                 window.draw(p);
             }
@@ -548,7 +535,7 @@ int main() {
             if (cooldown_domku.getElapsedTime().asSeconds() >= cooldown_resp_domku)
             {
                 sf::Sprite domek;
-                int index = rand() % 5;
+                int index = rand() % 4;
                 domek.setTexture(tekstury_domkow[index]);
 
                 //skalowanie
@@ -562,8 +549,8 @@ int main() {
                 domki.push_back(domek);
 
                 sf::RectangleShape hitbox;
-                float hitbox_start = zakresy_kominow[index % 5].start * (domek_size.x * scaleX);
-                float hitbox_end = zakresy_kominow[index % 5].koniec * (domek_size.x * scaleX);
+                float hitbox_start = zakresy_kominow[index % 4].start * (domek_size.x * scaleX);
+                float hitbox_end = zakresy_kominow[index % 4].koniec * (domek_size.x * scaleX);
 
                 hitbox.setSize(sf::Vector2f(hitbox_end - hitbox_start, wysokosc_hitboxa));
                 hitbox.setPosition(domek.getPosition().x + hitbox_start, domek.getPosition().y - 5.0f);
@@ -607,18 +594,18 @@ int main() {
             //tworzenie wykrzyknikow do fajerwerek + cooldown
             if (cooldown_fajerwerek.getElapsedTime().asSeconds() >= cooldown_resp_fajerwerek)
             {
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < ilosc_fajerwerek[poziom-1]; i++)
                 {
                     float fajerwerka_y = rand() % 501 + 100;
 
                     ostrzerzenie o;
                     o.wykrzyknik.setTexture(tekstura_wykrzyknik);
-                    o.wykrzyknik.setPosition(szerokosc_okna - 40, fajerwerka_y);
+                    o.wykrzyknik.setPosition(szerokosc_okna - 50, fajerwerka_y);
 
                     //skalowanie wykrzyknika
                     sf::Vector2u wykrzyknik_size = tekstura_wykrzyknik.getSize();
-                    scaleX = 50.0f / wykrzyknik_size.x;
-                    scaleY = 50.0f / wykrzyknik_size.y;
+                    scaleX = 70.0f / wykrzyknik_size.x;
+                    scaleY = 70.0f / wykrzyknik_size.y;
                     o.wykrzyknik.setScale(scaleX, scaleY);
                     o.Timer.restart();
 
@@ -640,8 +627,8 @@ int main() {
 
                     //skalowanie
                     sf::Vector2u fajerwerka_size = tekstury_fajerwerek[index].getSize();
-                    scaleX = 30.0f / fajerwerka_size.x;
-                    scaleY = 20.0f / fajerwerka_size.y;
+                    scaleX = 50.0f / fajerwerka_size.x;
+                    scaleY = 30.0f / fajerwerka_size.y;
                     fajerwerka.setScale(scaleX, scaleY);
                     fajerwerka.setPosition(szerokosc_okna + 1, o.wykrzyknik.getPosition().y);
                     fajerwerki.push_back(fajerwerka);
@@ -686,8 +673,8 @@ int main() {
                     s.setTexture(puste_serce);
                 }
                 sf::Vector2u serceSize = serce.getSize();
-                s.setScale(40.0f / serceSize.x, 40.0f / serceSize.y);
-                s.setPosition(szerokosc_okna - (i + 1) * 50.0f, 20.0f);
+                s.setScale(60.0f / serceSize.x, 60.0f / serceSize.y);
+                s.setPosition(szerokosc_okna - (i + 1) * 70.0f, 20.0f);
                 serca.push_back(s);
             }
 
@@ -737,7 +724,7 @@ int main() {
             for (auto& f : fajerwerki)
                 window.draw(f);
             //for (auto& h : hitboxy)
-            //  window.draw(h);
+              //window.draw(h);
             // rysowanie serc
             for (auto& s : serca)
                 window.draw(s);
