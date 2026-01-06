@@ -167,7 +167,7 @@ int main() {
     tekst_punktow.setFont(czcionka_game);
     tekst_punktow.setCharacterSize(120);       // rozmiar czcionki
     tekst_punktow.setFillColor(sf::Color::Yellow); // kolor tekstu
-    tekst_punktow.setPosition(20.0f,-25.0f);  // pozycja w lewym górnym rogu
+    tekst_punktow.setPosition(20.0f, -25.0f);  // pozycja w lewym górnym rogu
     tekst_punktow.setStyle(sf::Text::Bold);
 
     // przyciski w menu
@@ -189,7 +189,7 @@ int main() {
         sf::FloatRect bounds = p.getLocalBounds();
         p.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
 
-        float offsetY = (i-1) * 130.0f;
+        float offsetY = (i - 1) * 130.0f;
         p.setPosition(szerokosc_okna / 2.0f, (wysokosc_okna / 2.0f) + offsetY);
 
         przyciski.push_back(p);
@@ -205,7 +205,7 @@ int main() {
     poziomExit.setOutlineThickness(3.0f);
     sf::FloatRect szerokosc_exit = poziomExit.getLocalBounds();
     poziomExit.setOrigin(szerokosc_exit.left + szerokosc_exit.width / 2.0f, szerokosc_exit.top + szerokosc_exit.height / 2.0f);
-    poziomExit.setPosition(szerokosc_okna*0.5f, wysokosc_okna*0.85f);
+    poziomExit.setPosition(szerokosc_okna * 0.5f, wysokosc_okna * 0.85f);
 
     // ustawienie stanu gry na menu
 
@@ -241,7 +241,7 @@ int main() {
     //tekstury domkow
     std::vector<sf::Texture> tekstury_domkow;
     sf::Texture t1;
-    std::vector<std::string> obrazki_domkow = { "dom1.png", "dom2.png","dom3.png" ,"dom4.png"  };
+    std::vector<std::string> obrazki_domkow = { "dom1.png", "dom2.png","dom3.png" ,"dom4.png" };
     for (int i = 0; i < obrazki_domkow.size(); i++) {
         t1.loadFromFile(obrazki_domkow[i]);
         tekstury_domkow.push_back(t1);
@@ -489,11 +489,12 @@ int main() {
                     nowy.setTexture(tekstura_prezentu);
 
                     sf::Vector2u prezent_Size = tekstura_prezentu.getSize();
-                    float prezentScaleX = 50.0f / prezent_Size.x;
-                    float prezentScaleY = 50.0f / prezent_Size.y;
+                    float prezentScaleX = 70.0f / prezent_Size.x;
+                    float prezentScaleY = 70.0f / prezent_Size.y;
                     nowy.setScale(prezentScaleX, prezentScaleY);
 
-                    nowy.setPosition(mikolaj.getPosition());
+                    nowy.setPosition(pos.x,pos.y+53.0f);
+
 
                     prezenty.push_back(nowy);
 
@@ -594,7 +595,7 @@ int main() {
             //tworzenie wykrzyknikow do fajerwerek + cooldown
             if (cooldown_fajerwerek.getElapsedTime().asSeconds() >= cooldown_resp_fajerwerek)
             {
-                for (int i = 0; i < ilosc_fajerwerek[poziom-1]; i++)
+                for (int i = 0; i < ilosc_fajerwerek[poziom - 1]; i++)
                 {
                     float fajerwerka_y = rand() % 501 + 100;
 
@@ -627,8 +628,8 @@ int main() {
 
                     //skalowanie
                     sf::Vector2u fajerwerka_size = tekstury_fajerwerek[index].getSize();
-                    scaleX = 50.0f / fajerwerka_size.x;
-                    scaleY = 30.0f / fajerwerka_size.y;
+                    scaleX = 65.0f / fajerwerka_size.x;
+                    scaleY = 40.0f / fajerwerka_size.y;
                     fajerwerka.setScale(scaleX, scaleY);
                     fajerwerka.setPosition(szerokosc_okna + 1, o.wykrzyknik.getPosition().y);
                     fajerwerki.push_back(fajerwerka);
