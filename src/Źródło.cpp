@@ -3,8 +3,9 @@
 #include <windows.h>
 #include <vector>
 #include <algorithm>
+#include <string>
 
-enum StanGry { MENU, ROZGRYWKA, POZIOMY };
+enum StanGry { MENU, ROZGRYWKA, POZIOMY, SKLEP };
 
 struct m
 {
@@ -28,6 +29,12 @@ struct Poziom
     sf::Sprite obrazek;
     int numer_poziomu;
     /*bool odblokowany;*/ // na razie komentuje po nwm czy dojdziemy do tego etapu ale mozna by bylo poziomy odblokowywac
+};
+struct Powerup
+{
+    std::string nazwa;  // np. "Spowolnienie fajerwerek", "Tarcza", "Punkty x2"
+    float cena;         // koszt powerupa
+    bool aktywny;       // czy jest aktualnie kupiony/włączony
 };
 
 //do wektorow(!!!dla kciuka!!!) - kazdy indeks to nowy poziom, jak chcesz zmienic predkosc jakiegos obiektu to tutaj
@@ -74,7 +81,7 @@ void resetGierki(
     int szerokosc_okna, int wysokosc_okna
 ) {
     hp = 3;
-    punkty = 0;
+    punkty = 100;
     mikolaj.setPosition(szerokosc_okna / 8.0f, wysokosc_okna / 3.0f);
     prezenty.clear();
     domki.clear();
@@ -101,7 +108,7 @@ int main() {
     //kurwa potrzebuje poziomow XDD
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     int poziom = 1;
-    int punkty = 0;
+    int punkty = 100;
     int hp = 3;
     //tla i skala
     std::vector<sf::Texture> tla;
@@ -138,7 +145,13 @@ int main() {
     );
 
     setSpeed(poziom, predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x);
-
+    
+    // Powerupy
+    std::vector<Powerup> powerupy = {
+        { "Spowolnienie fajerwerek", 30.0f, false },
+        { "Tarcza", 25.0f, false },
+        { "Punkty x2", 20.0f, false }
+    };
     // Poziomy
     std::vector<Poziom> Poziomy;
     int kolumny = 3;
@@ -199,7 +212,7 @@ int main() {
     tekst_punktow.setStyle(sf::Text::Bold);
 
     // przyciski w menu
-    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "POZIOMY", "WYJDZ" };
+    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "POZIOMY", "SKLEP", "WYJDZ" };
     std::vector<sf::Text> przyciski;
 
     for (int i = 0; i < nazwyPrzycisków.size(); i++) {
@@ -217,7 +230,8 @@ int main() {
         sf::FloatRect bounds = p.getLocalBounds();
         p.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
 
-        float offsetY = (i - 1) * 130.0f;
+        // ogolne wyliczanie pozycji w pionie, zeby byly zawsze mniej-wiecej wycentrowane
+        float offsetY = (i - (nazwyPrzycisków.size() - 1) / 2.0f) * 130.0f;
         p.setPosition(szerokosc_okna / 2.0f, (wysokosc_okna / 2.0f) + offsetY);
 
         przyciski.push_back(p);
@@ -235,6 +249,82 @@ int main() {
     poziomExit.setOrigin(szerokosc_exit.left + szerokosc_exit.width / 2.0f, szerokosc_exit.top + szerokosc_exit.height / 2.0f);
     poziomExit.setPosition(szerokosc_okna * 0.5f, wysokosc_okna * 0.85f);
 
+    // --- SKLEP UI ---
+    // tytul "SKLEP" na gorze
+    sf::Text sklepTytul;
+    sklepTytul.setFont(czcionka_game);
+    sklepTytul.setString("SKLEP");
+    sklepTytul.setCharacterSize(80);
+    sklepTytul.setFillColor(sf::Color::White);
+    sklepTytul.setOutlineColor(sf::Color::Red);
+    sklepTytul.setOutlineThickness(3.0f);
+    {
+        sf::FloatRect SklepTytul = sklepTytul.getLocalBounds();
+        sklepTytul.setOrigin(SklepTytul.left + SklepTytul.width / 2.0f, SklepTytul.top + SklepTytul.height / 2.0f);
+    }
+    sklepTytul.setPosition(szerokosc_okna / 2.0f, 80.0f);
+
+    // przyciski powerupow
+    std::vector<sf::Text> przyciskiSklep;
+    float sklepMarginY = 80.0f;
+
+    // utworzenie pustych tekstow na powerupy (pozycjonowanie)
+    for (int i = 0; i < powerupy.size(); ++i) {
+        sf::Text textPowerup;
+        textPowerup.setFont(czcionka_game);
+        textPowerup.setCharacterSize(50);
+        textPowerup.setFillColor(sf::Color::White);
+        textPowerup.setOutlineColor(sf::Color::Red);
+        textPowerup.setOutlineThickness(2.0f);
+        float centerY = wysokosc_okna / 2.0f;
+        float posY = centerY + (i - 1) * sklepMarginY; // i=1 -> srodek, 0 nad, 2 pod
+        textPowerup.setPosition(szerokosc_okna / 2.0f, posY);
+        sf::FloatRect powerupBounds = textPowerup.getLocalBounds();
+        textPowerup.setOrigin(powerupBounds.left + powerupBounds.width / 2.0f, powerupBounds.top + powerupBounds.height / 2.0f);
+
+        przyciskiSklep.push_back(textPowerup);
+    }
+
+    // przycisk "Wyjdz do menu" na dole
+    sf::Text sklepExit;
+    sklepExit.setFont(czcionka_game);
+    sklepExit.setString("WYJDZ DO MENU");
+    sklepExit.setCharacterSize(60);
+    sklepExit.setFillColor(sf::Color::White);
+    sklepExit.setOutlineColor(sf::Color::Red);
+    sklepExit.setOutlineThickness(3.0f);
+    {
+        sf::FloatRect exitBounds = sklepExit.getLocalBounds();
+        sklepExit.setOrigin(exitBounds.left + exitBounds.width / 2.0f, exitBounds.top + exitBounds.height / 2.0f);
+    }
+    sklepExit.setPosition(szerokosc_okna / 2.0f, wysokosc_okna * 0.85f);
+
+    // helper do odswiezania napisow w sklepie
+    auto odswiezTekstySklep = [&]() {
+        for (int i = 0; i < powerupy.size(); ++i) {
+            std::string label;
+            if (powerupy[i].aktywny) {
+                label = powerupy[i].nazwa + "  (ZAKUPIONO)";
+            }
+            else {
+                label = powerupy[i].nazwa + "  (" + std::to_string((int)powerupy[i].cena) + ")";
+            }
+            przyciskiSklep[i].setString(label);
+
+            sf::FloatRect b = przyciskiSklep[i].getLocalBounds();
+            przyciskiSklep[i].setOrigin(b.left + b.width / 2.0f, b.top + b.height / 2.0f);
+        }
+    };
+
+    // powerupy sa tylko na jedna runde - na start wszystkie wylaczone w tekscie
+    odswiezTekstySklep();
+
+    auto resetPowerupyNaRunde = [&]() {
+        for (auto& p : powerupy) {
+            p.aktywny = false;
+        }
+        odswiezTekstySklep();
+    };
     // ustawienie stanu gry na menu
 
     StanGry aktualnyStan = MENU;
@@ -378,6 +468,9 @@ int main() {
                             else if (i == 1) {
                                 aktualnyStan = POZIOMY;
                             }
+                            else if (i == 2) {
+                                aktualnyStan = SKLEP;
+                            }
                             else if (i == przyciski.size() - 1) { // ostatni przycisk: WYJDZ
                                 window.close();
                             }
@@ -399,6 +492,24 @@ int main() {
                             resetGierki(hp, punkty, mikolaj, prezenty, domki, hitboxy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna);
 
                         }
+                    }
+                }
+            }
+            else if (aktualnyStan == SKLEP) {
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                    // klikniecie przyciskow powerupow
+                    for (int i = 0; i < przyciskiSklep.size(); ++i) {
+                        if (przyciskiSklep[i].getGlobalBounds().contains(mousePosF)) {
+                            if (!powerupy[i].aktywny && punkty >= powerupy[i].cena) {
+                                punkty -= static_cast<int>(powerupy[i].cena);
+                                powerupy[i].aktywny = true;
+                                odswiezTekstySklep();
+                            }
+                        }
+                    }
+                    // wyjscie do menu
+                    if (sklepExit.getGlobalBounds().contains(mousePosF)) {
+                        aktualnyStan = MENU;
                     }
                 }
             }
@@ -452,12 +563,44 @@ int main() {
             window.draw(poziomExit);
 
         }
+        else if (aktualnyStan == SKLEP) {
+            // --- SKLEP ---
+            window.draw(tlo_menu);
+
+            // hover na przyciski powerupow
+            for (auto& t : przyciskiSklep) {
+                if (t.getGlobalBounds().contains(mousePosF)) {
+                    t.setFillColor(sf::Color::Yellow);
+                    t.setScale(1.0f, 1.0f);
+                }
+                else {
+                    t.setFillColor(sf::Color::White);
+                    t.setScale(1.0f, 1.0f);
+                }
+            }
+
+            // hover na przycisk wyjscia
+            if (sklepExit.getGlobalBounds().contains(mousePosF)) {
+                sklepExit.setFillColor(sf::Color::Yellow);
+                sklepExit.setScale(1.2f, 1.2f);
+            }
+            else {
+                sklepExit.setFillColor(sf::Color::White);
+                sklepExit.setScale(1.0f, 1.0f);
+            }
+
+            window.draw(sklepTytul);
+            for (auto& t : przyciskiSklep)
+                window.draw(t);
+            window.draw(sklepExit);
+        }
         else if (aktualnyStan == ROZGRYWKA) {
             // --- ROZGRYWKA ---
 
             //wyjscie do menu(pozdro Juras)
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
             {
+                resetPowerupyNaRunde();
                 aktualnyStan = MENU;
             }
             float dt = clock.restart().asSeconds();
@@ -557,7 +700,15 @@ int main() {
                         {
                             if (p.getGlobalBounds().intersects(h.getGlobalBounds()))
                             {
-                                punkty += 1;
+                                // jesli powerup Punkty x2 aktywny, dodaj 2 punkty zamiast 1
+                                if (powerupy[2].aktywny)
+                                {
+                                    punkty += 2;
+                                }
+                                else
+                                {
+                                    punkty += 1;
+                                }
                                 return true;
                             }
                         }
@@ -680,10 +831,16 @@ int main() {
             );
 
             //aktualizacja wszystkich fajerwerek
+            float aktualna_predkosc_fajerwerek_x = predkosc_fajerwerek_x;
+            // jesli aktywne spowolnienie fajerwerek - lecą 40% wolniej
+            if (powerupy[0].aktywny)
+            {
+                aktualna_predkosc_fajerwerek_x *= 0.6f;
+            }
             for (auto& f : fajerwerki)
             {
                 sf::Vector2f pos_f = f.getPosition();
-                pos_f.x += -predkosc_fajerwerek_x * dt;
+                pos_f.x += -aktualna_predkosc_fajerwerek_x * dt;
                 f.setPosition(pos_f);
             }
 
@@ -730,7 +887,16 @@ int main() {
                 {
                     if (cooldown_dmg.getElapsedTime().asSeconds() >= czas_nietykalnosci)
                     {
-                        hp--;
+                        // jesli aktywna tarcza - usun tarcze, zostaw hp
+                        if (powerupy[1].aktywny)
+                        {
+                            powerupy[1].aktywny = false;
+                            odswiezTekstySklep();
+                        }
+                        else
+                        {
+                            hp--;
+                        }
                         cooldown_dmg.restart();
                     }
                     it = fajerwerki.erase(it);
@@ -742,6 +908,7 @@ int main() {
             }
             if (hp == 0)
             {
+                resetPowerupyNaRunde();
                 aktualnyStan = MENU;
             }
 
@@ -775,4 +942,4 @@ int main() {
     }
 
     return 0;
-} 
+}
