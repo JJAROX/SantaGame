@@ -46,6 +46,7 @@ std::vector<float> predkosci_prezent_x = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 std::vector<float> predkosci_prezent_y = { 200.0f, 200.0f, 200.0f, 200.0f, 200.0f, 200.0f };
 std::vector<float> predkosci_domek = { 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f };
 std::vector<float> predkosci_fajerwerki_x = { 400.0f, 400.0f, 400.0f, 400.0f, 400.0f, 400.0f };
+float predkosc_grincha = 250.f;
 std::vector<zakres> zakresy_kominow =
 {
     {0.23f, 0.39f}, // dom1
@@ -106,6 +107,7 @@ float predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek
 
 int main()
 {
+
     srand(time(NULL));
     int szerokosc_okna = 1200;
     int wysokosc_okna = 900;
@@ -117,12 +119,13 @@ int main()
     int coiny = 0;            // coiny ktore mozna wydac oddzielnie
     int wrzuconePrezenty = 0; // licznik trafień w aktualnej rundzie
     int hp = 3;
+    int ilosc_trafien_w_grincha = 0;
     bool unlockedLevelInfo = false; // komunikat o poziomie
     sf::Clock infoTimer;     // czas wyswietlania tego komunikatu
 
     // tla i skala
     std::vector<sf::Texture> tla;
-    std::vector<std::string> nazwy_tel = { "Europa.png", "pustynia.png", "las.png", "menu.png" };
+    std::vector<std::string> nazwy_tel = { "Europa.png", "pustynia.png", "las.png","arena.jpg", "menu.png" };
     sf::Texture grafika;
     for (int i = 0; i < nazwy_tel.size(); i++)
     {
@@ -211,8 +214,20 @@ int main()
     sf::Texture tekstura_mikolaj;
     tekstura_mikolaj.loadFromFile("mikolajp1.png");
 
+    //czcionka game
+
     sf::Font czcionka_game;
     czcionka_game.loadFromFile("ByteBounce.ttf");
+
+    //tekstura mikolaj minigierka
+
+    sf::Texture tekstura_mikolajb;
+    tekstura_mikolajb.loadFromFile("mikolajb.png");
+
+    //tekstura grincha
+    sf::Texture tekstura_grinch;
+    tekstura_grinch.loadFromFile("grinch.png");
+
 
     // ui coinów 
     sf::Text tekst_coinow;
@@ -228,6 +243,12 @@ int main()
     tekst_celu.setCharacterSize(60);
     tekst_celu.setFillColor(sf::Color::Cyan);
     tekst_celu.setPosition(20.0f, 60.0f);
+
+    sf::Text tekst_trafien_grinch;
+    tekst_trafien_grinch.setFont(czcionka_game);
+    tekst_trafien_grinch.setCharacterSize(80);
+    tekst_trafien_grinch.setFillColor(sf::Color::White);
+    tekst_trafien_grinch.setPosition(szerokosc_okna / 2.0f, 40.0f);
 
     // popup poziom odblokowany
     sf::Text tekst_info;
@@ -423,6 +444,10 @@ int main()
     zaladujDomki(pliki_p3); // indeks 2
     zaladujDomki(pliki_p4); // indeks 3
 
+    //tekstura sniezki
+    sf::Texture tekstura_sniezka;
+    tekstura_sniezka.loadFromFile("sniezka.png");
+
     //tekstury fajerwerek
     std::vector<std::string> obrazki_fajerwerkow = { "fajerwerek1.png", "fajerwerek2.png", "fajerwerek3.png" };
     std::vector<sf::Texture> tekstury_fajerwerek;
@@ -449,10 +474,12 @@ int main()
     sf::Clock cooldown_domku;
     sf::Clock cooldown_fajerwerek;
     sf::Clock cooldown_dmg;
+    sf::Clock cooldown_sniezka;
     float cooldown_prezent = 1.0f;
     float cooldown_resp_domku = 3.5f;
     float cooldown_resp_fajerwerek = 5.0f;
     float czas_nietykalnosci = 1.0f;
+    float cooldown_resp_sniezka = 2.0f;
 
     // mikolaj
     m k1 = { 365.0f, 155.0f };
@@ -464,6 +491,28 @@ int main()
     float scaleY = k1.wysokosc / texSize.y;
     mikolaj.setScale(scaleX, scaleY);
 
+    // mikolaj mini gierka 2:3 skala
+    m b1 = { 150.0f, 270.0f };
+    sf::Sprite mikolajb;
+    mikolajb.setTexture(tekstura_mikolajb);
+    texSize = tekstura_mikolajb.getSize();
+    mikolajb.setPosition(szerokosc_okna / 20, wysokosc_okna / 3);
+    scaleX = b1.szerokosc / texSize.x;
+    scaleY = b1.wysokosc / texSize.y;
+    mikolajb.setScale(scaleX, scaleY);
+
+    // grinch 3:2 skala
+    m g1 = { 300.0f, 200.0f };
+    sf::Sprite grinch;
+    grinch.setTexture(tekstura_grinch);
+    texSize = tekstura_grinch.getSize();
+    grinch.setPosition(szerokosc_okna - 320.f, wysokosc_okna / 3);
+    scaleX = g1.szerokosc / texSize.x;
+    scaleY = g1.wysokosc / texSize.y;
+    grinch.setScale(scaleX, scaleY);
+
+    // wiele sniezek
+    std::vector<sf::Sprite> sniezki;
     // wiele prezentów
     std::vector<sf::Sprite> prezenty;
 
@@ -559,11 +608,11 @@ int main()
         window.clear(sf::Color::Black);
 
         if (aktualnyStan == MENU)
-        {   
+        {
             // --- MENU ---
             window.draw(tlo_menu);
             for (auto& p : przyciski)
-            {   
+            {
                 // hover na button
                 if (p.getGlobalBounds().contains(mousePosF))
                 {
@@ -584,7 +633,7 @@ int main()
             // logika odblokowywania
             for (int i = 0; i < Poziomy.size(); i++)
             {
-                if (i == 0)
+                if (i == 0 || i == 3)
                     Poziomy[i].odblokowany = true;
                 else
                 {
@@ -696,8 +745,12 @@ int main()
             //cala mechnika tla(ruch i zapetlanie)
 
 
-            float predkosc_tla = 200.0f; //stala wartosc(tego nie zmieniamy w zaleznosci od poziomow)
 
+            float predkosc_tla = 200.0f; //stala wartosc(tego nie zmieniamy w zaleznosci od poziomow)
+            if (poziom == 4)
+            {
+                predkosc_tla = 0.f;
+            }
             tlo1_x -= predkosc_tla * dt;
             tlo2_x -= predkosc_tla * dt;
             if (tlo1_x + szerokosc_tla <= 0.0f)
@@ -707,38 +760,87 @@ int main()
             tlo1.setPosition(tlo1_x, 0.0f);
             tlo2.setPosition(tlo2_x, 0.0f);
             // ruch mikolaja
+
             sf::Vector2f pos = mikolaj.getPosition();
             sf::FloatRect bounds = mikolaj.getGlobalBounds();
             sf::Vector2f newPos = pos;
+            float ograniczenie_wysokosc = mikolaj.getGlobalBounds().getSize().y;
+            if (poziom == 4)
+            {
+                ograniczenie_wysokosc = mikolajb.getGlobalBounds().getSize().y;
+                pos = mikolajb.getPosition();
+                bounds = mikolajb.getGlobalBounds();
+                newPos = pos;
 
+            }
             if (window.hasFocus())
             {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
                     newPos.y -= predkosc_mikolaj_y * dt;
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
                     newPos.y += predkosc_mikolaj_y * dt;
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+                if ((sf::Keyboard::isKeyPressed(sf::Keyboard::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) && poziom != 4)
                     newPos.x -= predkosc_mikolaj_y * dt;
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+                if ((sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) && poziom != 4)
                     newPos.x += predkosc_mikolaj_y * dt;
             }
+
             // ograniczenia
-            if (newPos.x < 0)
-                newPos.x = 0;
+            int ograniczenie_x = 0, ograniczenie_y = 0;
+            if (newPos.x < ograniczenie_x)
+                newPos.x = ograniczenie_x;
             if (newPos.x + bounds.width > szerokosc_okna)
                 newPos.x = szerokosc_okna - bounds.width;
-            if (newPos.y < 0)
-                newPos.y = 0;
-            if (newPos.y + bounds.height > wysokosc_okna * 0.6f)
-                newPos.y = wysokosc_okna * 0.6f - bounds.height;
+            if (newPos.y < ograniczenie_y)
+                newPos.y = ograniczenie_y;
+            if (newPos.y + bounds.height > wysokosc_okna)
+                newPos.y = wysokosc_okna - ograniczenie_wysokosc;
 
-            mikolaj.setPosition(newPos);
+            poziom != 4 ? mikolaj.setPosition(newPos) : mikolajb.setPosition(newPos);
+            //grinch ruch góra dół
+
+            sf::Vector2f pos_grinch = grinch.getPosition();
+            sf::FloatRect bounds_grinch = grinch.getGlobalBounds();
+            sf::Vector2f newPos_grinch = pos_grinch;
+
+
+            newPos_grinch.y += predkosc_grincha * dt;
+
+            if (newPos_grinch.y <= ograniczenie_y)
+            {
+                newPos_grinch.y = ograniczenie_y;
+                predkosc_grincha = 250.0f;
+            }
+
+            if (newPos_grinch.y + bounds_grinch.height >= wysokosc_okna)
+            {
+                newPos_grinch.y = wysokosc_okna - bounds_grinch.height;
+                predkosc_grincha = -250.0f;
+            }
+
+            grinch.setPosition(newPos_grinch);
+
+            // tworzenie nowej sniezki + cooldown
+
+            if (window.hasFocus())
+            {
+                if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && cooldown_sniezka.getElapsedTime().asSeconds() >= cooldown_resp_sniezka) && poziom == 4)
+                {
+                    sf::Sprite nowa_sniezka;
+                    nowa_sniezka.setTexture(tekstura_sniezka);
+                    sf::Vector2u sniezka_size = tekstura_sniezka.getSize();
+                    nowa_sniezka.setScale(45.0f / sniezka_size.x, 45.0f / sniezka_size.y);
+                    nowa_sniezka.setPosition(pos.x, pos.y);
+                    sniezki.push_back(nowa_sniezka);
+                    cooldown_sniezka.restart();
+                }
+            }
 
             // tworzenie nowego prezentu + cooldown
 
             if (window.hasFocus())
             {
-                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && cooldown.getElapsedTime().asSeconds() >= cooldown_prezent)
+                if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && cooldown.getElapsedTime().asSeconds() >= cooldown_prezent) && poziom != 4)
                 {
                     sf::Sprite nowy;
                     int index = rand() % 8;
@@ -750,6 +852,26 @@ int main()
                     cooldown.restart();
                 }
             }
+            //aktualizacja sniezek
+            float predkosc_sniezka_x = 500.0f;
+            for (auto& s : sniezki)
+            {
+                s.move(predkosc_sniezka_x * dt, 0.0f);
+            }
+            //usuwanie sniezek + sprawdzanie kolizji z grinchem
+
+            sniezki.erase(std::remove_if(sniezki.begin(), sniezki.end(), [&](sf::Sprite& s)
+                {
+                    // sprawdzanie kolizji z grinchem
+                    if (s.getGlobalBounds().intersects(grinch.getGlobalBounds()))
+                    {
+                        ilosc_trafien_w_grincha++;
+                        return true; // usuń śnieżkę
+                    }
+                    // usuń jeśli poza ekranem
+                    return s.getPosition().x + s.getGlobalBounds().width > szerokosc_okna;
+                }),
+                sniezki.end());
 
             // aktualizacja prezentow
             for (auto& p : prezenty)
@@ -785,10 +907,10 @@ int main()
                     bezpiecznyOdstep = false;
                 }
             }
-            
+
             //tworzenie domku + cooldown + hitbox komina
             // respimy tylko gdy minął czas i jest miejsce (bezpiecznyOdstep)
-            if (cooldown_domku.getElapsedTime().asSeconds() >= cooldown_resp_domku && bezpiecznyOdstep)
+            if ((cooldown_domku.getElapsedTime().asSeconds() >= cooldown_resp_domku && bezpiecznyOdstep) && poziom != 4)
             {
                 sf::Sprite domek;
                 int index = rand() % 4;
@@ -831,7 +953,7 @@ int main()
                 hitboxy.end());
 
             //tworzenie wykrzyknikow do fajerwerek + cooldown
-            if (cooldown_fajerwerek.getElapsedTime().asSeconds() >= cooldown_resp_fajerwerek)
+            if ((cooldown_fajerwerek.getElapsedTime().asSeconds() >= cooldown_resp_fajerwerek) && poziom != 4)
             {
                 for (int i = 0; i < ilosc_fajerwerek[poziom - 1]; i++)
                 {
@@ -913,7 +1035,7 @@ int main()
                             powerupy[1].aktywny = false;
                             odswiezTekstySklep();
                         }
-                        else 
+                        else
                         {
                             hp--;
                         }
@@ -953,7 +1075,9 @@ int main()
             // rysowanie wszystkich domkow
             for (auto& d : domki)
                 window.draw(d);
-
+            // rysowanie wszystkich sniezek
+            for (auto& s : sniezki)
+                window.draw(s);
             //rysowanie wykrzyknikow
             for (auto& o : ostrzerzenia)
                 window.draw(o.wykrzyknik);
@@ -964,12 +1088,23 @@ int main()
 
             //for (auto& h : hitboxy)
               //window.draw(h);
+
             // rysowanie serc
             for (auto& s : serca)
                 window.draw(s);
             if (newPos.y + bounds.height == wysokosc_okna * 0.6f)
                 window.draw(napis_lot);
-            window.draw(mikolaj);
+            poziom != 4 ? window.draw(mikolaj) : window.draw(mikolajb);
+            if (poziom == 4)
+                window.draw(grinch);
+
+            if (poziom == 4)
+            {
+                tekst_trafien_grinch.setString(std::to_string(ilosc_trafien_w_grincha));
+                sf::FloatRect trafienBounds = tekst_trafien_grinch.getLocalBounds();
+                tekst_trafien_grinch.setOrigin(trafienBounds.left + trafienBounds.width / 2.0f, trafienBounds.top + trafienBounds.height / 2.0f);
+                window.draw(tekst_trafien_grinch);
+            }
 
             // ui coinuf i postepu
             tekst_coinow.setString("Coiny: " + std::to_string(coiny));
