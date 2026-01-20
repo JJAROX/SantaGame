@@ -44,7 +44,7 @@ struct Powerup
 std::vector<float> predkosci_mikolaj = { 200.0f, 200.0f, 200.0f, 200.0f, 200.0f, 200.0f };
 std::vector<float> predkosci_prezent_x = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
 std::vector<float> predkosci_prezent_y = { 200.0f, 200.0f, 200.0f, 200.0f, 200.0f, 200.0f };
-std::vector<float> predkosci_domek = { 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f };
+std::vector<float> predkosci_domek = { 100.0f, 100.0f, 300.0f, 100.0f, 100.0f, 100.0f };
 std::vector<float> predkosci_fajerwerki_x = { 400.0f, 400.0f, 400.0f, 400.0f, 400.0f, 400.0f };
 float predkosc_grincha = 250.f;
 std::vector<std::vector<zakres>> zakresy_kominow_na_poziomy =
@@ -1375,7 +1375,12 @@ int main()
 
                 cooldown_domku.restart();
 
-                cooldown_resp_domku = 4.0f + 4.0f * (rand() / (float)RAND_MAX);
+                if (poziom == 1)
+                    cooldown_resp_domku = 3.5f + 4.0f * (rand() / (float)RAND_MAX); // 4-8 sekund
+                else if (poziom == 2)
+                    cooldown_resp_domku = 2.5f + 3.0f * (rand() / (float)RAND_MAX); // 3-6 sekund
+                else if (poziom == 3)
+                    cooldown_resp_domku = 1.5f + 2.0f * (rand() / (float)RAND_MAX); // 2-4 sekundy
             }
 
             //aktualizacja wszystkich domkow
@@ -1569,8 +1574,8 @@ int main()
             for (auto& f : fajerwerki_grinch)
                 window.draw(f);
 
-            for (auto& h : hitboxy)
-                window.draw(h);
+            //for (auto& h : hitboxy)
+                //window.draw(h);
 
             if (poziom != 4)
             {
@@ -1641,6 +1646,7 @@ int main()
             if (poziom != 4)
             {
                 tekst_coinow.setString("Coiny: " + std::to_string(coiny));
+                tekst_coinow.setPosition(20.0f, -10.0f);
                 window.draw(tekst_coinow);
 
                 int cel = poziom * 10;
