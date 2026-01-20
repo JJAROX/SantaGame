@@ -1,39 +1,56 @@
-🎅 Santa's Delivery Rush
+# 🎅 Santa's Delivery Rush
+
 Zabawna gra platformowo-zręcznościowa stworzona w C++ z wykorzystaniem biblioteki SFML. Pomóż Mikołajowi nadrobić zaległości, przygotować prezenty i dostarczyć je dzieciom na całym świecie, unikając przy tym złośliwych pułapek Grincha!
 
-📖 Fabuła
+## 📖 Fabuła
 Mikołaj nieco zbyt mocno "odpoczywał" w swojej fabryce prezentów. Czas ucieka, a sanie są puste! Najpierw musisz przygotować prezenty w ekspresowym tempie, a potem wyruszyć w niebezpieczną podróż dookoła świata. Uważaj – Grinch nie śpi i zrobi wszystko, by zepsuć te święta.
 
-🎮 Mechanika Gry
+## 🎮 Mechanika Gry
 Gra podzielona jest na dwa główne etapy:
 
-    - Fabryka Prezentów (Minigierka): Zręcznościowe przygotowywanie paczek przed odlotem. Im lepiej Ci pójdzie, tym więcej zapasów masz na podróż.
+* **Fabryka Prezentów (Minigierka):** Zręcznościowe przygotowywanie paczek przed odlotem. Im lepiej Ci pójdzie, tym więcej zapasów masz na podróż.
+* **Podróż Saniami (Platformówka/Side-scroller):**
+    * **Cel:** Zrzucaj prezenty prosto do kominów.
+    * **Przeszkody:** Unikaj fajerwerków i śnieżek rzucanych przez Grincha.
+    * **Sabotaż:** Grinch podłożył bomby do Twoich sań! Jeśli wrzucisz je do komina – tracisz punkty.
+    * **Kontratak:** Możesz zrzucić bombę prosto na Grincha, aby zyskać czasową odporność na fajerwerki.
+    * **Postęp:** Każdy kontynent to nowy poziom z rosnącym poziomem trudności.
 
-    - Podróż Saniami (Platformówka/Side-scroller):
+## 🛠 Technologie
+* **Język:** C++17
+* **Grafika i Dźwięk:** SFML (Simple and Fast Multimedia Library)
+* **System Budowania:** CMake
+* **Architektura:** State Pattern (Zarządzanie stanami gry)
 
-    - Cel: Zrzucaj prezenty prosto do kominów.
+## 🚀 Wymagania
+* Kompilator C++ (GCC, Clang lub MSVC)
+* CMake (wersja 3.10 lub nowsza)
+* Biblioteka SFML (Projekt skonfigurowany jest tak, aby pobrać ją automatycznie przy budowaniu przez CMake)
 
-    - Przeszkody: Unikaj fajerwerków i śnieżek rzucanych przez Grincha.
+## 📥 Jak pobrać i uruchomić
 
-    - Sabotaż: Grinch podłożył bomby do Twoich sań! Jeśli wrzucisz je do komina – tracisz punkty.
+### Opcja 1: Przez Terminal (Zalecane dla macOS/Linux)
 
-    - Kontratak: Możesz zrzucić bombę prosto na Grincha, aby zyskać czasową odporność na fajerwerki.
+1.  **Pobierz kod:** Sklonuj repozytorium lub pobierz i rozpakuj plik ZIP.
+2.  **Otwórz terminal** w głównym folderze projektu.
+3.  **Wpisz poniższe komendy**, aby zbudować grę:
 
-    - Postęp: Każdy kontynent to nowy poziom z rosnącym poziomem trudności.
+    ```bash
+    mkdir build
+    cd build
+    cmake ..
+    make
+    ```
+    *(Uwaga: Na Windowsie zamiast `make` użyj `cmake --build .`)*
 
-🛠 Technologie
-    - Język: C++17 / C++20
+4.  **Uruchom grę:**
+    * **macOS/Linux:** `./SantaGame`
+    * **Windows:** `.\Debug\SantaGame.exe` (ścieżka może się różnić zależnie od kompilatora)
 
-    - Grafika i Dźwięk: SFML (Simple and Fast Multimedia Library)
+### Opcja 2: Visual Studio Code (Wygodne)
 
-    - System Budowania: CMake
-
-    - Architektura: State Pattern (Zarządzanie stanami gry)
-
-🚀 Budowanie i Uruchomienie
-Wymagania
-    - Kompilator C++ (GCC, Clang lub MSVC)
-
-    - Zainstalowana biblioteka SFML
-
-    - CMake (wersja 3.10 lub nowsza)
+1.  Otwórz folder z grą w **VS Code**.
+2.  Upewnij się, że masz zainstalowane rozszerzenia **C/C++** oraz **CMake Tools**.
+3.  Zezwól na konfigurację projektu (VS Code zapyta o to automatycznie po otwarciu folderu).
+4.  Wybierz zestaw kompilatora (Kit) na dolnym pasku (np. Clang na Macu).
+5.  Kliknij przycisk **Build** na dolnym pasku, a następnie ikonę **Play (▶)**, aby zagrać.
