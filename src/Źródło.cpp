@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <string>
 
-enum StanGry { MENU, ROZGRYWKA, POZIOMY, SKLEP };
+enum StanGry { MENU, ROZGRYWKA, POZIOMY, SKLEP, JAK_GRAC };
 
 struct m
 {
@@ -113,52 +113,55 @@ int main()
     int wysokosc_okna = 900;
     sf::RenderWindow window(sf::VideoMode(szerokosc_okna, wysokosc_okna), "SantaGame");
 
+    // Głośność ogólna (0-100)
+    float glosnosc_ogolna = 50.0f;
+
     sf::Music muzyka_tlo;
     muzyka_tlo.openFromFile("muzyka_tlo.ogg");
     muzyka_tlo.setLoop(true);
-    muzyka_tlo.setVolume(10.0f);
+    muzyka_tlo.setVolume(glosnosc_ogolna * 0.2f);
     muzyka_tlo.play();
 
     sf::Music muzyka_boss;
     muzyka_boss.openFromFile("dzwiek_boss.ogg");
     muzyka_boss.setLoop(true);
-    muzyka_boss.setVolume(3.0f);
+    muzyka_boss.setVolume(glosnosc_ogolna * 0.06f);
 
     sf::SoundBuffer buffer_punkt;
     buffer_punkt.loadFromFile("dzwiek_punkt.ogg");
     sf::Sound dzwiek_punkt;
     dzwiek_punkt.setBuffer(buffer_punkt);
-    dzwiek_punkt.setVolume(10.0f);
+    dzwiek_punkt.setVolume(glosnosc_ogolna * 0.2f);
 
     sf::SoundBuffer buffer_odblokowanie;
     buffer_odblokowanie.loadFromFile("dzwiek_odblokowanie_poziomu.ogg");
     sf::Sound dzwiek_odblokowanie;
     dzwiek_odblokowanie.setBuffer(buffer_odblokowanie);
-    dzwiek_odblokowanie.setVolume(10.0f);
+    dzwiek_odblokowanie.setVolume(glosnosc_ogolna * 0.2f);
 
     sf::SoundBuffer buffer_hitek;
     buffer_hitek.loadFromFile("dzwiek_hitek.ogg");
     sf::Sound dzwiek_hitek;
     dzwiek_hitek.setBuffer(buffer_hitek);
-    dzwiek_hitek.setVolume(4.0f);
+    dzwiek_hitek.setVolume(glosnosc_ogolna * 0.08f);
 
     sf::SoundBuffer buffer_hitek_grinch;
     buffer_hitek_grinch.loadFromFile("dzwiek_hitek_grinch.ogg");
     sf::Sound dzwiek_hitek_grinch;
     dzwiek_hitek_grinch.setBuffer(buffer_hitek_grinch);
-    dzwiek_hitek_grinch.setVolume(4.0f);
+    dzwiek_hitek_grinch.setVolume(glosnosc_ogolna * 0.08f);
 
     sf::SoundBuffer buffer_wygrana;
     buffer_wygrana.loadFromFile("dzwiek_wygrana.ogg");
     sf::Sound dzwiek_wygrana;
     dzwiek_wygrana.setBuffer(buffer_wygrana);
-    dzwiek_wygrana.setVolume(10.0f);
+    dzwiek_wygrana.setVolume(glosnosc_ogolna * 0.2f);
 
     sf::SoundBuffer buffer_przegrana;
     buffer_przegrana.loadFromFile("dzwiek_przegrana.ogg");
     sf::Sound dzwiek_przegrana;
     dzwiek_przegrana.setBuffer(buffer_przegrana);
-    dzwiek_przegrana.setVolume(10.0f);
+    dzwiek_przegrana.setVolume(glosnosc_ogolna * 0.2f);
 
     // kurwa potrzebuje poziomow XDD
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -260,7 +263,7 @@ int main()
             indeks_ikony = 6;
         else
             indeks_ikony = 0;
-        
+
         if (indeks_ikony < tla.size())
         {
             p.obrazek.setTexture(tla[indeks_ikony]);
@@ -402,7 +405,7 @@ int main()
     tekst_grinch_pokonal.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.0f + 60.0f);
 
     // przyciski w menu
-    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "POZIOMY", "SKLEP", "WYJDZ" };
+    std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "POZIOMY", "SKLEP", "JAK GRAC", "WYJDZ" };
     std::vector<sf::Text> przyciski;
 
     for (int i = 0; i < nazwyPrzycisków.size(); i++)
@@ -487,6 +490,79 @@ int main()
     }
     sklepExit.setPosition(szerokosc_okna / 2.0f, wysokosc_okna * 0.85f);
 
+    // Przycisk powrotu dla ekranu "Jak grać"
+    sf::Text jakGracExit;
+    jakGracExit.setFont(czcionka_game);
+    jakGracExit.setString("WROC DO MENU");
+    jakGracExit.setCharacterSize(60);
+    jakGracExit.setFillColor(sf::Color::White);
+    jakGracExit.setOutlineColor(sf::Color::Red);
+    jakGracExit.setOutlineThickness(3.0f);
+    {
+        sf::FloatRect exitBounds = jakGracExit.getLocalBounds();
+        jakGracExit.setOrigin(exitBounds.left + exitBounds.width / 2.0f, exitBounds.top + exitBounds.height / 2.0f);
+    }
+    jakGracExit.setPosition(szerokosc_okna / 2.0f, wysokosc_okna - 150.0f);
+
+    // Suwak głośności (zmienna już zdefiniowana wcześniej, używamy istniejącej)
+    bool przeciaganie_suwaka = false;
+    
+    sf::RectangleShape suwak_tlo;
+    suwak_tlo.setSize(sf::Vector2f(400.0f, 20.0f));
+    suwak_tlo.setFillColor(sf::Color(100, 100, 100));
+    suwak_tlo.setOutlineColor(sf::Color::White);
+    suwak_tlo.setOutlineThickness(2.0f);
+    suwak_tlo.setPosition(szerokosc_okna / 2.0f - 200.0f, wysokosc_okna - 200.0f);
+    
+    sf::RectangleShape suwak;
+    suwak.setSize(sf::Vector2f(15.0f, 30.0f));
+    suwak.setFillColor(sf::Color::Yellow);
+    suwak.setOutlineColor(sf::Color::White);
+    suwak.setOutlineThickness(2.0f);
+    
+    sf::Text tekst_glosnosc;
+    tekst_glosnosc.setFont(czcionka_game);
+    tekst_glosnosc.setString("GLOSNOSC");
+    tekst_glosnosc.setCharacterSize(30);
+    tekst_glosnosc.setFillColor(sf::Color::White);
+    tekst_glosnosc.setOutlineColor(sf::Color::Black);
+    tekst_glosnosc.setOutlineThickness(2.0f);
+    sf::FloatRect glosnoscBounds = tekst_glosnosc.getLocalBounds();
+    tekst_glosnosc.setOrigin(glosnoscBounds.left + glosnoscBounds.width / 2.0f, glosnoscBounds.top + glosnoscBounds.height / 2.0f);
+    tekst_glosnosc.setPosition(szerokosc_okna / 2.0f, wysokosc_okna - 240.0f);
+
+    // Teksty instrukcji
+    std::vector<sf::Text> instrukcje;
+    std::vector<std::string> tekstyInstrukcji = {
+        "STEROWANIE W NORMALNEJ GRZE",
+        "W/Strzalka w gore - lot do gory",
+        "S/Strzalka w dol - lot w dol",
+        "A/Strzalka w lewo - lot w lewo",
+        "D/Strzalka w prawo - lot w prawo",
+        "Spacja - rzut prezentem",
+        "",
+        "BOSS FIGHT",
+        "W/Strzalka w gore - ruch do gory",
+        "S/Strzalka w dol - ruch w dol",
+        "Spacja - rzut sniezka"
+    };
+    
+    for (size_t i = 0; i < tekstyInstrukcji.size(); i++)
+    {
+        sf::Text tekst;
+        tekst.setFont(czcionka_game);
+        tekst.setString(tekstyInstrukcji[i]);
+        tekst.setCharacterSize(i == 0 || i == 7 ? 50 : 40);
+        tekst.setFillColor(i == 0 || i == 7 ? sf::Color::Yellow : sf::Color::White);
+        tekst.setOutlineColor(sf::Color::Black);
+        tekst.setOutlineThickness(2.0f);
+        
+        sf::FloatRect bounds = tekst.getLocalBounds();
+        tekst.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
+        tekst.setPosition(szerokosc_okna / 2.0f, 100.0f + i * 45.0f);
+        instrukcje.push_back(tekst);
+    }
+
     // helper do odswiezania napisow w sklepie
     auto odswiezTekstySklep = [&]()
         {
@@ -554,7 +630,7 @@ int main()
     std::vector<std::string> pliki_p1 = { "dom1.png", "dom2.png", "dom3.png", "dom4.png" };
 
     // drugi kontynent
-    std::vector<std::string> pliki_p2 = { "pustynia_dom1.png", "pustynia_dom2.png", "pustynia_dom3.png"};
+    std::vector<std::string> pliki_p2 = { "pustynia_dom1.png", "pustynia_dom2.png", "pustynia_dom3.png" };
 
     // trzeci kontynent
     std::vector<std::string> pliki_p3 = { "las_dom1.png", "las_dom2.png", "las_dom3.png", "las_dom4.png" };
@@ -734,6 +810,8 @@ int main()
                                 aktualnyStan = POZIOMY;
                             else if (i == 2)
                                 aktualnyStan = SKLEP;
+                            else if (i == 3)
+                                aktualnyStan = JAK_GRAC;
                             else if (i == przyciski.size() - 1) // ostatni przycisk: WYJDZ
                                 window.close();
                         }
@@ -799,6 +877,20 @@ int main()
                     // wyjscie do menu
                     if (sklepExit.getGlobalBounds().contains(mousePosF))
                         aktualnyStan = MENU;
+                }
+            }
+            else if (aktualnyStan == JAK_GRAC)
+            {
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+                {
+                    if (jakGracExit.getGlobalBounds().contains(mousePosF))
+                        aktualnyStan = MENU;
+                    else if (suwak_tlo.getGlobalBounds().contains(mousePosF) || suwak.getGlobalBounds().contains(mousePosF))
+                        przeciaganie_suwaka = true;
+                }
+                if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
+                {
+                    przeciaganie_suwaka = false;
                 }
             }
         }
@@ -926,6 +1018,64 @@ int main()
             }
             window.draw(sklepTytul);
             window.draw(sklepExit);
+            
+            tekst_coinow.setString("Coiny: " + std::to_string(coiny));
+            tekst_coinow.setPosition(szerokosc_okna - tekst_coinow.getGlobalBounds().width - 20.0f, 20.0f);
+            window.draw(tekst_coinow);
+        }
+        else if (aktualnyStan == JAK_GRAC)
+        {
+            window.draw(tlo_menu);
+            
+            for (auto& tekst : instrukcje)
+            {
+                window.draw(tekst);
+            }
+            
+            // Aktualizacja pozycji suwaka podczas przeciągania
+            if (przeciaganie_suwaka)
+            {
+                float suwak_x = mousePosF.x;
+                float suwak_min_x = suwak_tlo.getPosition().x;
+                float suwak_max_x = suwak_tlo.getPosition().x + suwak_tlo.getSize().x;
+                
+                if (suwak_x < suwak_min_x)
+                    suwak_x = suwak_min_x;
+                if (suwak_x > suwak_max_x)
+                    suwak_x = suwak_max_x;
+                
+                glosnosc_ogolna = ((suwak_x - suwak_min_x) / (suwak_max_x - suwak_min_x)) * 100.0f;
+                
+                // Aktualizacja głośności wszystkich dźwięków
+                muzyka_tlo.setVolume(glosnosc_ogolna * 0.2f);
+                muzyka_boss.setVolume(glosnosc_ogolna * 0.06f);
+                dzwiek_punkt.setVolume(glosnosc_ogolna * 0.2f);
+                dzwiek_odblokowanie.setVolume(glosnosc_ogolna * 0.2f);
+                dzwiek_hitek.setVolume(glosnosc_ogolna * 0.08f);
+                dzwiek_hitek_grinch.setVolume(glosnosc_ogolna * 0.08f);
+                dzwiek_wygrana.setVolume(glosnosc_ogolna * 0.2f);
+                dzwiek_przegrana.setVolume(glosnosc_ogolna * 0.2f);
+            }
+            
+            // Aktualizacja pozycji suwaka na podstawie głośności
+            float suwak_x = suwak_tlo.getPosition().x + (glosnosc_ogolna / 100.0f) * suwak_tlo.getSize().x;
+            suwak.setPosition(suwak_x - suwak.getSize().x / 2.0f, suwak_tlo.getPosition().y - 5.0f);
+            
+            window.draw(tekst_glosnosc);
+            window.draw(suwak_tlo);
+            window.draw(suwak);
+            
+            if (jakGracExit.getGlobalBounds().contains(mousePosF))
+            {
+                jakGracExit.setFillColor(sf::Color::Yellow);
+                jakGracExit.setScale(1.2f, 1.2f);
+            }
+            else
+            {
+                jakGracExit.setFillColor(sf::Color::White);
+                jakGracExit.setScale(1.0f, 1.0f);
+            }
+            window.draw(jakGracExit);
         }
         else if (aktualnyStan == ROZGRYWKA)
         {
@@ -1030,8 +1180,17 @@ int main()
                 newPos.x = szerokosc_okna - bounds.width;
             if (newPos.y < ograniczenie_y)
                 newPos.y = ograniczenie_y;
-            if (newPos.y + bounds.height > wysokosc_okna)
-                newPos.y = wysokosc_okna - ograniczenie_wysokosc;
+            if (poziom != 4)
+            {
+                float max_y = wysokosc_okna * 0.65f;
+                if (newPos.y + bounds.height > max_y)
+                    newPos.y = max_y - bounds.height;
+            }
+            else
+            {
+                if (newPos.y + bounds.height > wysokosc_okna)
+                    newPos.y = wysokosc_okna - ograniczenie_wysokosc;
+            }
 
             poziom != 4 ? mikolaj.setPosition(newPos) : mikolajb.setPosition(newPos);
             //grinch ruch góra dół
@@ -1137,7 +1296,7 @@ int main()
                             wygranaTimer.restart();
                             muzyka_boss.stop();
                             dzwiek_wygrana.play();
-                            
+
                         }
                         return true; // usuń śnieżkę
                     }
@@ -1164,6 +1323,7 @@ int main()
                             if (wrzuconePrezenty == poziom * 10) {
                                 unlockedLevelInfo = true;
                                 infoTimer.restart();
+                                dzwiek_odblokowanie.play();
                             }
                             // jesli powerup Punkty x2 aktywny, dodaj 2 punkty zamiast 1
                             if (powerupy[2].aktywny) coiny += 2; else coiny += 1; // i cyk coinik
@@ -1177,7 +1337,7 @@ int main()
             bool bezpiecznyOdstep = true;
             if (!domki.empty()) {
                 // jeśli ostatni dodany domek jest bliżej niż 350 pikseli od prawej krawędzi to jest waiting room na nastepny domek (chyba za dlugo ale to do testow)
-                if (domki.back().getPosition().x > szerokosc_okna - 350.0f) {
+                if (domki.back().getPosition().x > szerokosc_okna - 150.0f) {
                     bezpiecznyOdstep = false;
                 }
             }
@@ -1197,7 +1357,7 @@ int main()
                     //skalowanie
                     sf::Vector2u domek_size = tekstury_domkow_na_poziomy[indexPoziomu][index].getSize();
                     domek.setScale(250.0f / domek_size.x, 250.0f / domek_size.y);
-                    domek.setPosition(szerokosc_okna, wysokosc_okna - 220.0f);
+                    domek.setPosition(szerokosc_okna, wysokosc_okna - 230.0f);
                     domki.push_back(domek);
 
                     sf::RectangleShape hitbox;
@@ -1227,14 +1387,15 @@ int main()
             domki.erase(std::remove_if(domki.begin(), domki.end(), [&](sf::Sprite& d)
                 { return d.getPosition().x + d.getGlobalBounds().width < 0; }),
                 domki.end());
-            
+
             auto it = hitboxy.begin();
             auto it_flag = trafione_kominy.begin();
             while (it != hitboxy.end()) {
                 if (it->getPosition().x + it->getSize().x < 0) {
                     it = hitboxy.erase(it);
                     it_flag = trafione_kominy.erase(it_flag);
-                } else {
+                }
+                else {
                     ++it;
                     ++it_flag;
                 }
@@ -1358,7 +1519,7 @@ int main()
                         przegranaTimer.restart();
                         muzyka_boss.stop();
                         dzwiek_przegrana.play();
-                        
+
                     }
                     it = fajerwerki_grinch.erase(it);
                 }
@@ -1409,7 +1570,7 @@ int main()
                 window.draw(f);
 
             for (auto& h : hitboxy)
-              window.draw(h);
+                window.draw(h);
 
             if (poziom != 4)
             {
