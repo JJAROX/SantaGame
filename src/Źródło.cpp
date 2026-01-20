@@ -1,6 +1,6 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
-#include <windows.h>
 #include <vector>
 #include <algorithm>
 #include <string>
@@ -47,12 +47,11 @@ std::vector<float> predkosci_prezent_y = { 200.0f, 200.0f, 200.0f, 200.0f, 200.0
 std::vector<float> predkosci_domek = { 100.0f, 100.0f, 100.0f, 100.0f, 100.0f, 100.0f };
 std::vector<float> predkosci_fajerwerki_x = { 400.0f, 400.0f, 400.0f, 400.0f, 400.0f, 400.0f };
 float predkosc_grincha = 250.f;
-std::vector<zakres> zakresy_kominow =
+std::vector<std::vector<zakres>> zakresy_kominow_na_poziomy =
 {
-    {0.23f, 0.39f}, // dom1
-    {0.67f, 0.85f}, // dom2
-    {0.73f, 0.92f}, // dom3
-    {0.62f, 0.88f}  // dom4
+    {{0.23f, 0.39f}, {0.67f, 0.85f}, {0.73f, 0.92f}, {0.62f, 0.88f}},//poziom 1
+    {{0.62f, 0.9f}, {0.62f, 0.9f}, {0.48f, 0.77f}, {0.0f, 0.0f}},//poziom 2
+    {{0.2f, 0.5f}, {0.2f, 0.5f}, {0.2f, 0.5f}, {0.2f, 0.5f}},//poziom 3
 };
 std::vector<int> ilosc_fajerwerek = { 2, 2, 3, 3, 3 };
 int wysokosc_hitboxa = 10.0f;
@@ -78,7 +77,7 @@ void setSpeed(int poziom, float& predkosc_mikolaj_y, float& predkosc_prezent_x, 
 void resetGierki(
     int& hp, int& wrzuconePrezenty, sf::Sprite& mikolaj,
     std::vector<sf::Sprite>& prezenty, std::vector<sf::Sprite>& domki,
-    std::vector<sf::RectangleShape>& hitboxy, std::vector<sf::Sprite>& fajerwerki,
+    std::vector<sf::RectangleShape>& hitboxy, std::vector<bool>& trafione_kominy, std::vector<sf::Sprite>& fajerwerki,
     std::vector<ostrzerzenie>& ostrzerzenia, std::vector<sf::Sprite>& serca,
     float& tlo1_x, float& tlo2_x, float szerokosc_tla,
     StanGry& aktualnyStan, sf::Clock& clock,
@@ -92,6 +91,7 @@ void resetGierki(
     prezenty.clear();
     domki.clear();
     hitboxy.clear();
+    trafione_kominy.clear();
     fajerwerki.clear();
     ostrzerzenia.clear();
     serca.clear();
@@ -113,6 +113,53 @@ int main()
     int wysokosc_okna = 900;
     sf::RenderWindow window(sf::VideoMode(szerokosc_okna, wysokosc_okna), "SantaGame");
 
+    sf::Music muzyka_tlo;
+    muzyka_tlo.openFromFile("muzyka_tlo.ogg");
+    muzyka_tlo.setLoop(true);
+    muzyka_tlo.setVolume(10.0f);
+    muzyka_tlo.play();
+
+    sf::Music muzyka_boss;
+    muzyka_boss.openFromFile("dzwiek_boss.ogg");
+    muzyka_boss.setLoop(true);
+    muzyka_boss.setVolume(3.0f);
+
+    sf::SoundBuffer buffer_punkt;
+    buffer_punkt.loadFromFile("dzwiek_punkt.ogg");
+    sf::Sound dzwiek_punkt;
+    dzwiek_punkt.setBuffer(buffer_punkt);
+    dzwiek_punkt.setVolume(10.0f);
+
+    sf::SoundBuffer buffer_odblokowanie;
+    buffer_odblokowanie.loadFromFile("dzwiek_odblokowanie_poziomu.ogg");
+    sf::Sound dzwiek_odblokowanie;
+    dzwiek_odblokowanie.setBuffer(buffer_odblokowanie);
+    dzwiek_odblokowanie.setVolume(10.0f);
+
+    sf::SoundBuffer buffer_hitek;
+    buffer_hitek.loadFromFile("dzwiek_hitek.ogg");
+    sf::Sound dzwiek_hitek;
+    dzwiek_hitek.setBuffer(buffer_hitek);
+    dzwiek_hitek.setVolume(4.0f);
+
+    sf::SoundBuffer buffer_hitek_grinch;
+    buffer_hitek_grinch.loadFromFile("dzwiek_hitek_grinch.ogg");
+    sf::Sound dzwiek_hitek_grinch;
+    dzwiek_hitek_grinch.setBuffer(buffer_hitek_grinch);
+    dzwiek_hitek_grinch.setVolume(4.0f);
+
+    sf::SoundBuffer buffer_wygrana;
+    buffer_wygrana.loadFromFile("dzwiek_wygrana.ogg");
+    sf::Sound dzwiek_wygrana;
+    dzwiek_wygrana.setBuffer(buffer_wygrana);
+    dzwiek_wygrana.setVolume(10.0f);
+
+    sf::SoundBuffer buffer_przegrana;
+    buffer_przegrana.loadFromFile("dzwiek_przegrana.ogg");
+    sf::Sound dzwiek_przegrana;
+    dzwiek_przegrana.setBuffer(buffer_przegrana);
+    dzwiek_przegrana.setVolume(10.0f);
+
     // kurwa potrzebuje poziomow XDD
     //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     int poziom = 1;
@@ -120,12 +167,19 @@ int main()
     int wrzuconePrezenty = 0; // licznik trafień w aktualnej rundzie
     int hp = 3;
     int ilosc_trafien_w_grincha = 0;
+    int ilosc_trafien_w_mikolaja = 0;
     bool unlockedLevelInfo = false; // komunikat o poziomie
     sf::Clock infoTimer;     // czas wyswietlania tego komunikatu
+    bool aktualne_tlo_odwrocone = false;
+    bool wygrana_poziom4 = false;
+    sf::Clock wygranaTimer;
+    bool przegrana_poziom4 = false;
+    sf::Clock przegranaTimer;
+    std::vector<bool> poprzedni_stan_odblokowania(4, false);
 
     // tla i skala
     std::vector<sf::Texture> tla;
-    std::vector<std::string> nazwy_tel = { "Europa.png", "pustynia.png", "las.png","arena.jpg", "menu.png" };
+    std::vector<std::string> nazwy_tel = { "Europa.png", "Europa_odw.png", "pustynia.png", "pustynia_odw.png", "las.png", "las_odw.png", "arena.jpg", "menu.png" };
     sf::Texture grafika;
     for (int i = 0; i < nazwy_tel.size(); i++)
     {
@@ -141,15 +195,27 @@ int main()
     tla.push_back(grafika);*/
 
     sf::Sprite tlo1, tlo2, tlo_menu;
-    tlo1.setTexture(tla[poziom - 1]);
-    sf::Vector2u tloSize = tla[poziom - 1].getSize();
-    tlo1.setScale((float)szerokosc_okna / tloSize.x, (float)wysokosc_okna / tloSize.y);
+    int indeks_tla_start;
+    if (poziom == 1)
+        indeks_tla_start = 0;
+    else if (poziom == 2)
+        indeks_tla_start = 2;
+    else if (poziom == 3)
+        indeks_tla_start = 4;
+    else if (poziom == 4)
+        indeks_tla_start = 6;
+    else
+        indeks_tla_start = 0;
+    tlo1.setTexture(tla[indeks_tla_start]);
+    sf::Vector2u tloSize = tla[indeks_tla_start].getSize();
+    tlo1.setScale(1200.0f / tloSize.x, 900.0f / tloSize.y);
     tlo1.setPosition(0.0f, 0.0f);
-    tlo2.setTexture(tla[poziom - 1]);
-    tlo2.setScale((float)szerokosc_okna / tloSize.x, (float)wysokosc_okna / tloSize.y);
-    float szerokosc_tla = tlo1.getGlobalBounds().width;
+    tlo2.setTexture(tla[indeks_tla_start]);
+    tlo2.setScale(1200.0f / tloSize.x, 900.0f / tloSize.y);
+    float szerokosc_tla = 1200.0f;
     tlo2.setPosition(szerokosc_tla, 0.0f);
     float tlo1_x = 0.0f, tlo2_x = szerokosc_tla;
+    aktualne_tlo_odwrocone = false;
     tlo_menu.setTexture(tla[tla.size() - 1]); // trzeba zrobic tak aby grafika pod menu byla zawsze ostatnia
 
     sf::Vector2u menuSize = tla[tla.size() - 1].getSize();
@@ -183,10 +249,22 @@ int main()
         p.ramka.setFillColor(sf::Color(50, 50, 50));
 
         // img pod poziom
-        if (i < tla.size())
+        int indeks_ikony;
+        if (i == 0)
+            indeks_ikony = 0;
+        else if (i == 1)
+            indeks_ikony = 2;
+        else if (i == 2)
+            indeks_ikony = 4;
+        else if (i == 3)
+            indeks_ikony = 6;
+        else
+            indeks_ikony = 0;
+        
+        if (indeks_ikony < tla.size())
         {
-            p.obrazek.setTexture(tla[i]);
-            sf::Vector2u texSize = tla[i].getSize();
+            p.obrazek.setTexture(tla[indeks_ikony]);
+            sf::Vector2u texSize = tla[indeks_ikony].getSize();
             p.obrazek.setScale(szerokosc_poziomu / texSize.x, wysokosc_poziomu / texSize.y);
         }
 
@@ -208,6 +286,12 @@ int main()
         p.ramka.setPosition(posX, posY);
         p.obrazek.setPosition(posX, posY);
         Poziomy.push_back(p);
+    }
+
+    // inicjalizacja poprzedniego stanu odblokowania
+    for (int i = 0; i < Poziomy.size(); i++)
+    {
+        poprzedni_stan_odblokowania[i] = Poziomy[i].odblokowany;
     }
 
     // tekstura mikolaja
@@ -244,11 +328,22 @@ int main()
     tekst_celu.setFillColor(sf::Color::Cyan);
     tekst_celu.setPosition(20.0f, 60.0f);
 
-    sf::Text tekst_trafien_grinch;
-    tekst_trafien_grinch.setFont(czcionka_game);
-    tekst_trafien_grinch.setCharacterSize(80);
-    tekst_trafien_grinch.setFillColor(sf::Color::White);
-    tekst_trafien_grinch.setPosition(szerokosc_okna / 2.0f, 40.0f);
+    sf::Text  tekst_trafien;
+    tekst_trafien.setFont(czcionka_game);
+    tekst_trafien.setCharacterSize(80);
+    tekst_trafien.setFillColor(sf::Color::White);
+    tekst_trafien.setPosition(szerokosc_okna / 2.0f, 130.0f);
+
+    sf::Text tekst_wynik;
+    tekst_wynik.setFont(czcionka_game);
+    tekst_wynik.setString("TRAFIENIA MIKOLAJA : TRAFIENIA GRINCHA");
+    tekst_wynik.setCharacterSize(60);
+    tekst_wynik.setFillColor(sf::Color::White);
+    tekst_wynik.setOutlineColor(sf::Color::Black);
+    tekst_wynik.setOutlineThickness(1.0f);
+    sf::FloatRect wynikBounds = tekst_wynik.getLocalBounds();
+    tekst_wynik.setOrigin(wynikBounds.left + wynikBounds.width / 2.0f, wynikBounds.top + wynikBounds.height / 2.0f);
+    tekst_wynik.setPosition(szerokosc_okna / 2.0f, 60.0f);
 
     // popup poziom odblokowany
     sf::Text tekst_info;
@@ -261,6 +356,50 @@ int main()
     sf::FloatRect infoBounds = tekst_info.getLocalBounds();
     tekst_info.setOrigin(infoBounds.left + infoBounds.width / 2.0f, infoBounds.top + infoBounds.height / 2.0f);
     tekst_info.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 4.0f); // W górnej części ekranu
+
+    sf::Text tekst_wygrana;
+    tekst_wygrana.setFont(czcionka_game);
+    tekst_wygrana.setString("WYGRANA");
+    tekst_wygrana.setCharacterSize(120);
+    tekst_wygrana.setFillColor(sf::Color::Green);
+    tekst_wygrana.setOutlineColor(sf::Color::Black);
+    tekst_wygrana.setOutlineThickness(5.0f);
+    sf::FloatRect wygranaBounds = tekst_wygrana.getLocalBounds();
+    tekst_wygrana.setOrigin(wygranaBounds.left + wygranaBounds.width / 2.0f, wygranaBounds.top + wygranaBounds.height / 2.0f);
+    tekst_wygrana.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.0f - 60.0f);
+
+    sf::Text tekst_pokonales;
+    tekst_pokonales.setFont(czcionka_game);
+    tekst_pokonales.setString("Pokonales grincha");
+    tekst_pokonales.setCharacterSize(80);
+    tekst_pokonales.setFillColor(sf::Color::White);
+    tekst_pokonales.setOutlineColor(sf::Color::Black);
+    tekst_pokonales.setOutlineThickness(3.0f);
+    sf::FloatRect pokonalesBounds = tekst_pokonales.getLocalBounds();
+    tekst_pokonales.setOrigin(pokonalesBounds.left + pokonalesBounds.width / 2.0f, pokonalesBounds.top + pokonalesBounds.height / 2.0f);
+    tekst_pokonales.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.0f + 60.0f);
+
+    sf::Text tekst_przegrana;
+    tekst_przegrana.setFont(czcionka_game);
+    tekst_przegrana.setString("PRZEGRANA");
+    tekst_przegrana.setCharacterSize(120);
+    tekst_przegrana.setFillColor(sf::Color::Red);
+    tekst_przegrana.setOutlineColor(sf::Color::Black);
+    tekst_przegrana.setOutlineThickness(5.0f);
+    sf::FloatRect przegranaBounds = tekst_przegrana.getLocalBounds();
+    tekst_przegrana.setOrigin(przegranaBounds.left + przegranaBounds.width / 2.0f, przegranaBounds.top + przegranaBounds.height / 2.0f);
+    tekst_przegrana.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.0f - 60.0f);
+
+    sf::Text tekst_grinch_pokonal;
+    tekst_grinch_pokonal.setFont(czcionka_game);
+    tekst_grinch_pokonal.setString("Grinch pokonal mikolaja");
+    tekst_grinch_pokonal.setCharacterSize(80);
+    tekst_grinch_pokonal.setFillColor(sf::Color::White);
+    tekst_grinch_pokonal.setOutlineColor(sf::Color::Black);
+    tekst_grinch_pokonal.setOutlineThickness(3.0f);
+    sf::FloatRect grinchPokonalBounds = tekst_grinch_pokonal.getLocalBounds();
+    tekst_grinch_pokonal.setOrigin(grinchPokonalBounds.left + grinchPokonalBounds.width / 2.0f, grinchPokonalBounds.top + grinchPokonalBounds.height / 2.0f);
+    tekst_grinch_pokonal.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.0f + 60.0f);
 
     // przyciski w menu
     std::vector<std::string> nazwyPrzycisków = { "ZAGRAJ", "POZIOMY", "SKLEP", "WYJDZ" };
@@ -415,7 +554,7 @@ int main()
     std::vector<std::string> pliki_p1 = { "dom1.png", "dom2.png", "dom3.png", "dom4.png" };
 
     // drugi kontynent
-    std::vector<std::string> pliki_p2 = { "pustynia_dom1.png", "pustynia_dom2.png", "pustynia_dom3.png", "pustynia_dom4.png" };
+    std::vector<std::string> pliki_p2 = { "pustynia_dom1.png", "pustynia_dom2.png", "pustynia_dom3.png"};
 
     // trzeci kontynent
     std::vector<std::string> pliki_p3 = { "las_dom1.png", "las_dom2.png", "las_dom3.png", "las_dom4.png" };
@@ -475,11 +614,15 @@ int main()
     sf::Clock cooldown_fajerwerek;
     sf::Clock cooldown_dmg;
     sf::Clock cooldown_sniezka;
+    sf::Clock cooldown_grinch_fajerwerki;
+    sf::Clock cooldown_grinch_kierunek;
     float cooldown_prezent = 1.0f;
     float cooldown_resp_domku = 3.5f;
     float cooldown_resp_fajerwerek = 5.0f;
     float czas_nietykalnosci = 1.0f;
     float cooldown_resp_sniezka = 2.0f;
+    float cooldown_resp_sniezka_grinch = 1.5f;
+    float czas_zmiany_kierunku_grinch = 7.0f + 3.0f * (rand() / (float)RAND_MAX);
 
     // mikolaj
     m k1 = { 365.0f, 155.0f };
@@ -521,9 +664,12 @@ int main()
 
     //hitboxy domkow
     std::vector<sf::RectangleShape> hitboxy;
+    std::vector<bool> trafione_kominy;
 
     //wiele fajerwerek 
     std::vector<sf::Sprite> fajerwerki;
+
+    std::vector<sf::Sprite> fajerwerki_grinch;
 
     //wykrzykniki
     std::vector<ostrzerzenie> ostrzerzenia;
@@ -533,6 +679,31 @@ int main()
 
     while (window.isOpen())
     {
+        if (window.hasFocus())
+        {
+            if (aktualnyStan == ROZGRYWKA && poziom == 4)
+            {
+                if (muzyka_tlo.getStatus() == sf::Music::Playing)
+                    muzyka_tlo.pause();
+                if (muzyka_boss.getStatus() != sf::Music::Playing)
+                    muzyka_boss.play();
+            }
+            else
+            {
+                if (muzyka_boss.getStatus() == sf::Music::Playing)
+                    muzyka_boss.stop();
+                if (muzyka_tlo.getStatus() != sf::Music::Playing)
+                    muzyka_tlo.play();
+            }
+        }
+        else
+        {
+            if (muzyka_tlo.getStatus() == sf::Music::Playing)
+                muzyka_tlo.pause();
+            if (muzyka_boss.getStatus() == sf::Music::Playing)
+                muzyka_boss.pause();
+        }
+
         sf::Event event;
         sf::Vector2i mousePos = sf::Mouse::getPosition(window);
         sf::Vector2f mousePosF = window.mapPixelToCoords(mousePos);
@@ -551,7 +722,14 @@ int main()
                         if (przyciski[i].getGlobalBounds().contains(mousePosF))
                         {
                             if (i == 0) // pierwszy przycisk: ZAGRAJ
-                                resetGierki(hp, wrzuconePrezenty, mikolaj, prezenty, domki, hitboxy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna, unlockedLevelInfo);
+                            {
+                                aktualne_tlo_odwrocone = false;
+                                wygrana_poziom4 = false;
+                                przegrana_poziom4 = false;
+                                ilosc_trafien_w_grincha = 0;
+                                ilosc_trafien_w_mikolaja = 0;
+                                resetGierki(hp, wrzuconePrezenty, mikolaj, prezenty, domki, hitboxy, trafione_kominy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna, unlockedLevelInfo);
+                            }
                             else if (i == 1)
                                 aktualnyStan = POZIOMY;
                             else if (i == 2)
@@ -573,10 +751,30 @@ int main()
                         if (p.ramka.getGlobalBounds().contains(mousePosF) && p.odblokowany)
                         {
                             poziom = p.numer_poziomu;
-                            tlo1.setTexture(tla[poziom - 1]);
-                            tlo2.setTexture(tla[poziom - 1]);
+                            int indeks_tla;
+                            if (poziom == 1)
+                                indeks_tla = 0;
+                            else if (poziom == 2)
+                                indeks_tla = 2;
+                            else if (poziom == 3)
+                                indeks_tla = 4;
+                            else if (poziom == 4)
+                                indeks_tla = 6;
+                            else
+                                indeks_tla = 0;
+                            tlo1.setTexture(tla[indeks_tla]);
+                            tlo2.setTexture(tla[indeks_tla]);
+                            sf::Vector2u tloSize = tla[indeks_tla].getSize();
+                            tlo1.setScale(1200.0f / tloSize.x, 900.0f / tloSize.y);
+                            tlo2.setScale(1200.0f / tloSize.x, 900.0f / tloSize.y);
+                            szerokosc_tla = 1200.0f;
+                            aktualne_tlo_odwrocone = false;
+                            wygrana_poziom4 = false;
+                            przegrana_poziom4 = false;
+                            ilosc_trafien_w_grincha = 0;
+                            ilosc_trafien_w_mikolaja = 0;
                             setSpeed(poziom, predkosc_mikolaj_y, predkosc_prezent_x, predkosc_prezent_y, predkosc_domek_x, predkosc_fajerwerek_x);
-                            resetGierki(hp, wrzuconePrezenty, mikolaj, prezenty, domki, hitboxy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna, unlockedLevelInfo);
+                            resetGierki(hp, wrzuconePrezenty, mikolaj, prezenty, domki, hitboxy, trafione_kominy, fajerwerki, ostrzerzenia, serca, tlo1_x, tlo2_x, szerokosc_tla, aktualnyStan, clock, cooldown_domku, cooldown_fajerwerek, szerokosc_okna, wysokosc_okna, unlockedLevelInfo);
                         }
                     }
                 }
@@ -633,13 +831,20 @@ int main()
             // logika odblokowywania
             for (int i = 0; i < Poziomy.size(); i++)
             {
-                if (i == 0 || i == 3)
+                if (i == 0)
                     Poziomy[i].odblokowany = true;
                 else
                 {
                     int wymagane = i * 10;
                     Poziomy[i].odblokowany = (Poziomy[i - 1].max_prezenty >= wymagane);
                 }
+
+                if (!poprzedni_stan_odblokowania[i] && Poziomy[i].odblokowany)
+                {
+                    dzwiek_odblokowanie.play();
+                }
+
+                poprzedni_stan_odblokowania[i] = Poziomy[i].odblokowany;
 
                 if (Poziomy[i].odblokowany)
                 {
@@ -754,11 +959,43 @@ int main()
             tlo1_x -= predkosc_tla * dt;
             tlo2_x -= predkosc_tla * dt;
             if (tlo1_x + szerokosc_tla <= 0.0f)
+            {
                 tlo1_x = tlo2_x + szerokosc_tla - 5.0f;
+                if (poziom == 1 || poziom == 2 || poziom == 3)
+                {
+                    aktualne_tlo_odwrocone = !aktualne_tlo_odwrocone;
+                    int indeks_tla;
+                    if (poziom == 1)
+                        indeks_tla = aktualne_tlo_odwrocone ? 1 : 0;
+                    else if (poziom == 2)
+                        indeks_tla = aktualne_tlo_odwrocone ? 3 : 2;
+                    else if (poziom == 3)
+                        indeks_tla = aktualne_tlo_odwrocone ? 5 : 4;
+                    tlo1.setTexture(tla[indeks_tla]);
+                    sf::Vector2u tloSize = tla[indeks_tla].getSize();
+                    tlo1.setScale(1200.0f / tloSize.x, 900.0f / tloSize.y);
+                    szerokosc_tla = 1200.0f;
+                }
+            }
             if (tlo2_x + szerokosc_tla <= 0.0f)
+            {
                 tlo2_x = tlo1_x + szerokosc_tla - 5.0f;
-            tlo1.setPosition(tlo1_x, 0.0f);
-            tlo2.setPosition(tlo2_x, 0.0f);
+                if (poziom == 1 || poziom == 2 || poziom == 3)
+                {
+                    aktualne_tlo_odwrocone = !aktualne_tlo_odwrocone;
+                    int indeks_tla;
+                    if (poziom == 1)
+                        indeks_tla = aktualne_tlo_odwrocone ? 1 : 0;
+                    else if (poziom == 2)
+                        indeks_tla = aktualne_tlo_odwrocone ? 3 : 2;
+                    else if (poziom == 3)
+                        indeks_tla = aktualne_tlo_odwrocone ? 5 : 4;
+                    tlo2.setTexture(tla[indeks_tla]);
+                    sf::Vector2u tloSize = tla[indeks_tla].getSize();
+                    tlo2.setScale(1200.0f / tloSize.x, 900.0f / tloSize.y);
+                    szerokosc_tla = 1200.0f;
+                }
+            }
             // ruch mikolaja
 
             sf::Vector2f pos = mikolaj.getPosition();
@@ -799,26 +1036,53 @@ int main()
             poziom != 4 ? mikolaj.setPosition(newPos) : mikolajb.setPosition(newPos);
             //grinch ruch góra dół
 
-            sf::Vector2f pos_grinch = grinch.getPosition();
-            sf::FloatRect bounds_grinch = grinch.getGlobalBounds();
-            sf::Vector2f newPos_grinch = pos_grinch;
-
-
-            newPos_grinch.y += predkosc_grincha * dt;
-
-            if (newPos_grinch.y <= ograniczenie_y)
+            if (!wygrana_poziom4 && !przegrana_poziom4)
             {
-                newPos_grinch.y = ograniczenie_y;
-                predkosc_grincha = 250.0f;
+                sf::Vector2f pos_grinch = grinch.getPosition();
+                sf::FloatRect bounds_grinch = grinch.getGlobalBounds();
+                sf::Vector2f newPos_grinch = pos_grinch;
+
+
+                newPos_grinch.y += predkosc_grincha * dt;
+
+                if (newPos_grinch.y <= ograniczenie_y)
+                {
+                    newPos_grinch.y = ograniczenie_y;
+                    predkosc_grincha = 250.0f;
+                }
+
+                if (newPos_grinch.y + bounds_grinch.height >= wysokosc_okna)
+                {
+                    newPos_grinch.y = wysokosc_okna - bounds_grinch.height;
+                    predkosc_grincha = -250.0f;
+                }
+
+                if (poziom == 4)
+                {
+                    if (cooldown_grinch_kierunek.getElapsedTime().asSeconds() >= czas_zmiany_kierunku_grinch)
+                    {
+                        predkosc_grincha = -predkosc_grincha;
+                        czas_zmiany_kierunku_grinch = 7.0f + 3.0f * (rand() / (float)RAND_MAX);
+                        cooldown_grinch_kierunek.restart();
+                    }
+                }
+                grinch.setPosition(newPos_grinch);
             }
 
-            if (newPos_grinch.y + bounds_grinch.height >= wysokosc_okna)
+            if (poziom == 4 && !wygrana_poziom4 && !przegrana_poziom4)
             {
-                newPos_grinch.y = wysokosc_okna - bounds_grinch.height;
-                predkosc_grincha = -250.0f;
+                if (cooldown_grinch_fajerwerki.getElapsedTime().asSeconds() >= cooldown_resp_sniezka_grinch)
+                {
+                    sf::Sprite fajerwerka;
+                    fajerwerka.setTexture(tekstury_fajerwerek[2]);
+                    sf::Vector2u fajerwerka_size = tekstury_fajerwerek[2].getSize();
+                    fajerwerka.setScale(65.0f / fajerwerka_size.x, 40.0f / fajerwerka_size.y);
+                    sf::FloatRect grinchBounds = grinch.getGlobalBounds();
+                    fajerwerka.setPosition(grinchBounds.left + grinchBounds.width / 2.0f, grinchBounds.top + grinchBounds.height / 2.0f);
+                    fajerwerki_grinch.push_back(fajerwerka);
+                    cooldown_grinch_fajerwerki.restart();
+                }
             }
-
-            grinch.setPosition(newPos_grinch);
 
             // tworzenie nowej sniezki + cooldown
 
@@ -866,6 +1130,15 @@ int main()
                     if (s.getGlobalBounds().intersects(grinch.getGlobalBounds()))
                     {
                         ilosc_trafien_w_grincha++;
+                        dzwiek_hitek_grinch.play();
+                        if (poziom == 4 && ilosc_trafien_w_grincha == 10 && !wygrana_poziom4)
+                        {
+                            wygrana_poziom4 = true;
+                            wygranaTimer.restart();
+                            muzyka_boss.stop();
+                            dzwiek_wygrana.play();
+                            
+                        }
                         return true; // usuń śnieżkę
                     }
                     // usuń jeśli poza ekranem
@@ -883,10 +1156,11 @@ int main()
             prezenty.erase(std::remove_if(prezenty.begin(), prezenty.end(), [&](sf::Sprite& p)
                 {
                     if (p.getPosition().y + p.getGlobalBounds().height >= wysokosc_okna) return true;
-                    for (auto& h : hitboxy) {
-                        if (p.getGlobalBounds().intersects(h.getGlobalBounds())) {
-                            wrzuconePrezenty++; // trafienie w komin daje postęp
-                            // szybki check czy odblokowales poizom
+                    for (size_t i = 0; i < hitboxy.size(); i++) {
+                        if (!trafione_kominy[i] && p.getGlobalBounds().intersects(hitboxy[i].getGlobalBounds())) {
+                            trafione_kominy[i] = true;
+                            wrzuconePrezenty++;
+                            dzwiek_punkt.play();
                             if (wrzuconePrezenty == poziom * 10) {
                                 unlockedLevelInfo = true;
                                 infoTimer.restart();
@@ -913,10 +1187,11 @@ int main()
             if ((cooldown_domku.getElapsedTime().asSeconds() >= cooldown_resp_domku && bezpiecznyOdstep) && poziom != 4)
             {
                 sf::Sprite domek;
-                int index = rand() % 4;
-
                 int indexPoziomu = poziom - 1;
                 if (indexPoziomu >= 0 && indexPoziomu < tekstury_domkow_na_poziomy.size()) {
+                    int liczba_tekstur = tekstury_domkow_na_poziomy[indexPoziomu].size();
+                    int index = rand() % liczba_tekstur;
+
                     domek.setTexture(tekstury_domkow_na_poziomy[indexPoziomu][index]);
 
                     //skalowanie
@@ -926,12 +1201,16 @@ int main()
                     domki.push_back(domek);
 
                     sf::RectangleShape hitbox;
-                    float hitbox_start = zakresy_kominow[index % 4].start * (domek_size.x * (250.0f / domek_size.x));
-                    float hitbox_end = zakresy_kominow[index % 4].koniec * (domek_size.x * (250.0f / domek_size.x));
+                    int zakres_index = index;
+                    if (zakres_index >= zakresy_kominow_na_poziomy[indexPoziomu].size())
+                        zakres_index = zakresy_kominow_na_poziomy[indexPoziomu].size() - 1;
+                    float hitbox_start = zakresy_kominow_na_poziomy[indexPoziomu][zakres_index].start * (domek_size.x * (250.0f / domek_size.x));
+                    float hitbox_end = zakresy_kominow_na_poziomy[indexPoziomu][zakres_index].koniec * (domek_size.x * (250.0f / domek_size.x));
                     hitbox.setSize(sf::Vector2f(hitbox_end - hitbox_start, wysokosc_hitboxa));
                     hitbox.setPosition(domek.getPosition().x + hitbox_start, domek.getPosition().y - 5.0f);
                     hitbox.setFillColor(sf::Color::Black);
                     hitboxy.push_back(hitbox);
+                    trafione_kominy.push_back(false);
                 }
 
                 cooldown_domku.restart();
@@ -948,9 +1227,18 @@ int main()
             domki.erase(std::remove_if(domki.begin(), domki.end(), [&](sf::Sprite& d)
                 { return d.getPosition().x + d.getGlobalBounds().width < 0; }),
                 domki.end());
-            hitboxy.erase(std::remove_if(hitboxy.begin(), hitboxy.end(), [&](sf::RectangleShape& h)
-                { return h.getPosition().x + h.getSize().x < 0; }),
-                hitboxy.end());
+            
+            auto it = hitboxy.begin();
+            auto it_flag = trafione_kominy.begin();
+            while (it != hitboxy.end()) {
+                if (it->getPosition().x + it->getSize().x < 0) {
+                    it = hitboxy.erase(it);
+                    it_flag = trafione_kominy.erase(it_flag);
+                } else {
+                    ++it;
+                    ++it_flag;
+                }
+            }
 
             //tworzenie wykrzyknikow do fajerwerek + cooldown
             if ((cooldown_fajerwerek.getElapsedTime().asSeconds() >= cooldown_resp_fajerwerek) && poziom != 4)
@@ -1000,6 +1288,13 @@ int main()
                 { return f.getPosition().x + f.getGlobalBounds().width < 0; }),
                 fajerwerki.end());
 
+            float f_speed_grinch = predkosc_fajerwerek_x;
+            for (auto& f : fajerwerki_grinch)
+                f.move(-f_speed_grinch * dt, 0);
+            fajerwerki_grinch.erase(std::remove_if(fajerwerki_grinch.begin(), fajerwerki_grinch.end(), [&](sf::Sprite& f)
+                { return f.getPosition().x + f.getGlobalBounds().width < 0; }),
+                fajerwerki_grinch.end());
+
             //rysowanie serc z odpowiednią teksturą
             serca.clear();
             for (int i = 0; i < 3; i++)
@@ -1019,14 +1314,18 @@ int main()
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::BackSpace))
                     window.close();
 
+            tlo1.setPosition(tlo1_x, 0.0f);
+            tlo2.setPosition(tlo2_x, 0.0f);
             window.draw(tlo1);
             window.draw(tlo2);
 
             //odejmowanie hp podczas kolizji
+            sf::FloatRect playerBounds = (poziom != 4 ? mikolaj : mikolajb).getGlobalBounds();
             for (auto it = fajerwerki.begin(); it != fajerwerki.end();)
             {
-                if (mikolaj.getGlobalBounds().intersects((*it).getGlobalBounds()))
+                if (playerBounds.intersects((*it).getGlobalBounds()))
                 {
+                    dzwiek_hitek.play();
                     if (cooldown_dmg.getElapsedTime().asSeconds() >= czas_nietykalnosci)
                     {
                         // jesli aktywna tarcza - usun tarcze, zostaw hp
@@ -1042,6 +1341,26 @@ int main()
                         cooldown_dmg.restart();
                     }
                     it = fajerwerki.erase(it);
+                }
+                else
+                    it++;
+            }
+
+            for (auto it = fajerwerki_grinch.begin(); it != fajerwerki_grinch.end();)
+            {
+                if (playerBounds.intersects((*it).getGlobalBounds()))
+                {
+                    ilosc_trafien_w_mikolaja++;
+                    dzwiek_hitek.play();
+                    if (poziom == 4 && ilosc_trafien_w_mikolaja == 10 && !przegrana_poziom4)
+                    {
+                        przegrana_poziom4 = true;
+                        przegranaTimer.restart();
+                        muzyka_boss.stop();
+                        dzwiek_przegrana.play();
+                        
+                    }
+                    it = fajerwerki_grinch.erase(it);
                 }
                 else
                     it++;
@@ -1086,12 +1405,17 @@ int main()
             for (auto& f : fajerwerki)
                 window.draw(f);
 
-            //for (auto& h : hitboxy)
-              //window.draw(h);
+            for (auto& f : fajerwerki_grinch)
+                window.draw(f);
 
-            // rysowanie serc
-            for (auto& s : serca)
-                window.draw(s);
+            for (auto& h : hitboxy)
+              window.draw(h);
+
+            if (poziom != 4)
+            {
+                for (auto& s : serca)
+                    window.draw(s);
+            }
             if (newPos.y + bounds.height == wysokosc_okna * 0.6f)
                 window.draw(napis_lot);
             poziom != 4 ? window.draw(mikolaj) : window.draw(mikolajb);
@@ -1100,26 +1424,72 @@ int main()
 
             if (poziom == 4)
             {
-                tekst_trafien_grinch.setString(std::to_string(ilosc_trafien_w_grincha));
-                sf::FloatRect trafienBounds = tekst_trafien_grinch.getLocalBounds();
-                tekst_trafien_grinch.setOrigin(trafienBounds.left + trafienBounds.width / 2.0f, trafienBounds.top + trafienBounds.height / 2.0f);
-                window.draw(tekst_trafien_grinch);
+                window.draw(tekst_wynik);
+                tekst_trafien.setString(std::to_string(ilosc_trafien_w_grincha) + " : " + std::to_string(ilosc_trafien_w_mikolaja));
+                tekst_trafien.setOutlineColor(sf::Color::Black);
+                tekst_trafien.setOutlineThickness(1.0f);
+                sf::FloatRect trafienBounds = tekst_trafien.getLocalBounds();
+                tekst_trafien.setOrigin(trafienBounds.left + trafienBounds.width / 2.0f, trafienBounds.top + trafienBounds.height / 2.0f);
+                window.draw(tekst_trafien);
+
+                if (wygrana_poziom4)
+                {
+                    if (wygranaTimer.getElapsedTime().asSeconds() >= 5.0f)
+                    {
+                        resetPowerupyNaRunde();
+                        aktualnyStan = MENU;
+                        wygrana_poziom4 = false;
+                        ilosc_trafien_w_grincha = 0;
+                        ilosc_trafien_w_mikolaja = 0;
+                    }
+                    else
+                    {
+                        sf::RectangleShape tlo_wygrana;
+                        tlo_wygrana.setSize(sf::Vector2f(szerokosc_okna, wysokosc_okna));
+                        tlo_wygrana.setFillColor(sf::Color(0, 0, 0, 200));
+                        tlo_wygrana.setPosition(0.0f, 0.0f);
+                        window.draw(tlo_wygrana);
+                        window.draw(tekst_wygrana);
+                        window.draw(tekst_pokonales);
+                    }
+                }
+
+                if (przegrana_poziom4)
+                {
+                    if (przegranaTimer.getElapsedTime().asSeconds() >= 5.0f)
+                    {
+                        resetPowerupyNaRunde();
+                        aktualnyStan = MENU;
+                        przegrana_poziom4 = false;
+                        ilosc_trafien_w_grincha = 0;
+                        ilosc_trafien_w_mikolaja = 0;
+                    }
+                    else
+                    {
+                        sf::RectangleShape tlo_przegrana;
+                        tlo_przegrana.setSize(sf::Vector2f(szerokosc_okna, wysokosc_okna));
+                        tlo_przegrana.setFillColor(sf::Color(0, 0, 0, 200));
+                        tlo_przegrana.setPosition(0.0f, 0.0f);
+                        window.draw(tlo_przegrana);
+                        window.draw(tekst_przegrana);
+                        window.draw(tekst_grinch_pokonal);
+                    }
+                }
             }
 
-            // ui coinuf i postepu
-            tekst_coinow.setString("Coiny: " + std::to_string(coiny));
-            window.draw(tekst_coinow);
+            if (poziom != 4)
+            {
+                tekst_coinow.setString("Coiny: " + std::to_string(coiny));
+                window.draw(tekst_coinow);
 
-            int cel = poziom * 10;
-            int zostalo = cel - wrzuconePrezenty;
-            if (zostalo < 0)
-                zostalo = 0;
-            tekst_celu.setString("Cel: " + std::to_string(zostalo) + " / " + std::to_string(cel));
-            if (zostalo == 0)
-                tekst_celu.setFillColor(sf::Color::Green);
-            else
-                tekst_celu.setFillColor(sf::Color::Cyan);
-            window.draw(tekst_celu);
+                int cel = poziom * 10;
+                tekst_celu.setString("Cel: " + std::to_string(wrzuconePrezenty) + " / " + std::to_string(cel));
+                if (wrzuconePrezenty >= cel)
+                    tekst_celu.setFillColor(sf::Color::Green);
+                else
+                    tekst_celu.setFillColor(sf::Color::Cyan);
+                window.draw(tekst_celu);
+            }
 
             // komunikacik o odblokowaniu poziomu zostal wyswietlony
             if (unlockedLevelInfo)
