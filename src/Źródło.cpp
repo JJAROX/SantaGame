@@ -302,12 +302,10 @@ int main()
     tekstura_mikolaj.loadFromFile("mikolajp1.png");
 
     //czcionka game
-
     sf::Font czcionka_game;
     czcionka_game.loadFromFile("ByteBounce.ttf");
 
     //tekstura mikolaj minigierka
-
     sf::Texture tekstura_mikolajb;
     tekstura_mikolajb.loadFromFile("mikolajb.png");
 
@@ -506,20 +504,20 @@ int main()
 
     // Suwak głośności (zmienna już zdefiniowana wcześniej, używamy istniejącej)
     bool przeciaganie_suwaka = false;
-    
+
     sf::RectangleShape suwak_tlo;
     suwak_tlo.setSize(sf::Vector2f(400.0f, 20.0f));
     suwak_tlo.setFillColor(sf::Color(100, 100, 100));
     suwak_tlo.setOutlineColor(sf::Color::White);
     suwak_tlo.setOutlineThickness(2.0f);
     suwak_tlo.setPosition(szerokosc_okna / 2.0f - 200.0f, wysokosc_okna - 200.0f);
-    
+
     sf::RectangleShape suwak;
     suwak.setSize(sf::Vector2f(15.0f, 30.0f));
     suwak.setFillColor(sf::Color::Yellow);
     suwak.setOutlineColor(sf::Color::White);
     suwak.setOutlineThickness(2.0f);
-    
+
     sf::Text tekst_glosnosc;
     tekst_glosnosc.setFont(czcionka_game);
     tekst_glosnosc.setString("GLOSNOSC");
@@ -546,7 +544,7 @@ int main()
         "S/Strzalka w dol - ruch w dol",
         "Spacja - rzut sniezka"
     };
-    
+
     for (size_t i = 0; i < tekstyInstrukcji.size(); i++)
     {
         sf::Text tekst;
@@ -556,7 +554,7 @@ int main()
         tekst.setFillColor(i == 0 || i == 7 ? sf::Color::Yellow : sf::Color::White);
         tekst.setOutlineColor(sf::Color::Black);
         tekst.setOutlineThickness(2.0f);
-        
+
         sf::FloatRect bounds = tekst.getLocalBounds();
         tekst.setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
         tekst.setPosition(szerokosc_okna / 2.0f, 100.0f + i * 45.0f);
@@ -614,15 +612,6 @@ int main()
         tekstura_prezentu.push_back(tekstura);
     }
 
-    //sprawdzenie czy załadowało to chyba trzeba usunąć??? (działa bez tego bo sprawdziłem)
-    /* {
-        char buffer[MAX_PATH];
-        GetCurrentDirectoryA(MAX_PATH, buffer);
-        std::cout << buffer << std::endl;
-        std::cout << "nie zaladowano tekstury prezentu" << std::endl;
-        return 1;
-    }*/
-
     // wektor wektorów - przechowuje zestawy tekstur dla każdego poziomu
     std::vector<std::vector<sf::Texture>> tekstury_domkow_na_poziomy;
 
@@ -653,6 +642,7 @@ int main()
             }
             tekstury_domkow_na_poziomy.push_back(temp_vec);
         };
+
     // ladowanie do glownego vectora
     zaladujDomki(pliki_p1); // indeks 0
     zaladujDomki(pliki_p2); // indeks 1
@@ -732,6 +722,7 @@ int main()
 
     // wiele sniezek
     std::vector<sf::Sprite> sniezki;
+
     // wiele prezentów
     std::vector<sf::Sprite> prezenty;
 
@@ -744,7 +735,6 @@ int main()
 
     //wiele fajerwerek 
     std::vector<sf::Sprite> fajerwerki;
-
     std::vector<sf::Sprite> fajerwerki_grinch;
 
     //wykrzykniki
@@ -862,6 +852,7 @@ int main()
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
                 {
                     // klikniecie przyciskow powerupow
+
                     for (int i = 0; i < przyciskiSklep.size(); ++i)
                     {
                         if (przyciskiSklep[i].getGlobalBounds().contains(mousePosF))
@@ -875,6 +866,7 @@ int main()
                         }
                     }
                     // wyjscie do menu
+
                     if (sklepExit.getGlobalBounds().contains(mousePosF))
                         aktualnyStan = MENU;
                 }
@@ -900,10 +892,12 @@ int main()
         if (aktualnyStan == MENU)
         {
             // --- MENU ---
+
             window.draw(tlo_menu);
             for (auto& p : przyciski)
             {
                 // hover na button
+
                 if (p.getGlobalBounds().contains(mousePosF))
                 {
                     p.setFillColor(sf::Color::Yellow);
@@ -921,6 +915,7 @@ int main()
         {   // --- POZIOMY ---
 
             // logika odblokowywania
+
             for (int i = 0; i < Poziomy.size(); i++)
             {
                 if (i == 0)
@@ -954,12 +949,14 @@ int main()
             for (auto& p : Poziomy)
             {
                 // hover na ramkę
+
                 if (p.odblokowany && p.ramka.getGlobalBounds().contains(mousePosF))
                     p.ramka.setOutlineColor(sf::Color::Yellow);
                 window.draw(p.ramka);
                 window.draw(p.obrazek);
 
                 // tekst rekordu/wymagania
+
                 sf::Text tekst_wyniku;
                 tekst_wyniku.setFont(czcionka_game);
                 std::string txt = "Rekord: " + std::to_string(p.max_prezenty);
@@ -993,10 +990,11 @@ int main()
         else if (aktualnyStan == SKLEP)
         {
             // --- SKLEP ---
+
             window.draw(tlo_menu);
 
-
             // hover na przyciski powerupow
+
             for (auto& t : przyciskiSklep)
             {
                 if (t.getGlobalBounds().contains(mousePosF))
@@ -1006,6 +1004,7 @@ int main()
                 window.draw(t);
             }
             // hover na przycisk wyjscia
+
             if (sklepExit.getGlobalBounds().contains(mousePosF))
             {
                 sklepExit.setFillColor(sf::Color::Yellow);
@@ -1018,7 +1017,7 @@ int main()
             }
             window.draw(sklepTytul);
             window.draw(sklepExit);
-            
+
             tekst_coinow.setString("Coiny: " + std::to_string(coiny));
             tekst_coinow.setPosition(szerokosc_okna - tekst_coinow.getGlobalBounds().width - 20.0f, 20.0f);
             window.draw(tekst_coinow);
@@ -1026,26 +1025,27 @@ int main()
         else if (aktualnyStan == JAK_GRAC)
         {
             window.draw(tlo_menu);
-            
+
             for (auto& tekst : instrukcje)
             {
                 window.draw(tekst);
             }
-            
+
             // Aktualizacja pozycji suwaka podczas przeciągania
+
             if (przeciaganie_suwaka)
             {
                 float suwak_x = mousePosF.x;
                 float suwak_min_x = suwak_tlo.getPosition().x;
                 float suwak_max_x = suwak_tlo.getPosition().x + suwak_tlo.getSize().x;
-                
+
                 if (suwak_x < suwak_min_x)
                     suwak_x = suwak_min_x;
                 if (suwak_x > suwak_max_x)
                     suwak_x = suwak_max_x;
-                
+
                 glosnosc_ogolna = ((suwak_x - suwak_min_x) / (suwak_max_x - suwak_min_x)) * 100.0f;
-                
+
                 // Aktualizacja głośności wszystkich dźwięków
                 muzyka_tlo.setVolume(glosnosc_ogolna * 0.2f);
                 muzyka_boss.setVolume(glosnosc_ogolna * 0.06f);
@@ -1056,15 +1056,15 @@ int main()
                 dzwiek_wygrana.setVolume(glosnosc_ogolna * 0.2f);
                 dzwiek_przegrana.setVolume(glosnosc_ogolna * 0.2f);
             }
-            
+
             // Aktualizacja pozycji suwaka na podstawie głośności
             float suwak_x = suwak_tlo.getPosition().x + (glosnosc_ogolna / 100.0f) * suwak_tlo.getSize().x;
             suwak.setPosition(suwak_x - suwak.getSize().x / 2.0f, suwak_tlo.getPosition().y - 5.0f);
-            
+
             window.draw(tekst_glosnosc);
             window.draw(suwak_tlo);
             window.draw(suwak);
-            
+
             if (jakGracExit.getGlobalBounds().contains(mousePosF))
             {
                 jakGracExit.setFillColor(sf::Color::Yellow);
@@ -1097,9 +1097,8 @@ int main()
                 aktualnyStan = MENU;
             }
             float dt = clock.restart().asSeconds();
+
             //cala mechnika tla(ruch i zapetlanie)
-
-
 
             float predkosc_tla = 200.0f; //stala wartosc(tego nie zmieniamy w zaleznosci od poziomow)
             if (poziom == 4)
@@ -1573,7 +1572,8 @@ int main()
 
             for (auto& f : fajerwerki_grinch)
                 window.draw(f);
-
+            
+            //odkomentowac przy sprawdzaniu hitboxow
             //for (auto& h : hitboxy)
                 //window.draw(h);
 
