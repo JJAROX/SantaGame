@@ -18,14 +18,17 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(sfml)
 
-# Dodajemy plik wykonywalny
-add_executable(SantaGame main.cpp)
+# --- PLIK WYKONYWALNY ---
+# ZMIANA: Wskazujemy, że plik jest w folderze src
+add_executable(SantaGame src/main.cpp)
+
+# Jeśli w przyszłości dodasz Game.cpp, zrób tak:
+# add_executable(SantaGame src/main.cpp src/Game.cpp)
 
 # --- LINKOWANIE ---
-# Ważne: sfml-audio jest tutaj kluczowe
 target_link_libraries(SantaGame PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)
 
 # --- KOPIOWANIE ZASOBÓW ---
-# To jest jedyna linijka, której potrzebujesz do zasobów.
-# Kopiuje folder "assets" z kodem źródłowym do folderu "build", gdzie powstaje gra.
+# Kopiujemy folder 'assets' z głównego katalogu do folderu build.
+# Dzięki temu gra nadal będzie widzieć pliki jako "assets/..."
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/assets" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
