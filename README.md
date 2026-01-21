@@ -54,3 +54,16 @@ Gra podzielona jest na dwa główne etapy:
 3.  Zezwól na konfigurację projektu (VS Code zapyta o to automatycznie po otwarciu folderu).
 4.  Wybierz zestaw kompilatora (Kit) na dolnym pasku (np. Clang na Macu).
 5.  Kliknij przycisk **Build** na dolnym pasku, a następnie ikonę **Play (▶)**, aby zagrać.
+
+### ⚠️ Rozwiązywanie problemów na Windows
+
+Jeśli po uruchomieniu pliku `SantaGame.exe` nic się nie dzieje (konsola znika) lub pojawia się błąd o braku plików `.dll`, musisz ręcznie skopiować biblioteki do folderu z grą.
+
+1.  Wejdź do folderu, gdzie zbudowała się gra (zazwyczaj `build/Debug`).
+2.  Upewnij się, że znajdują się tam następujące pliki (jeśli nie, poszukaj ich w folderze `build` i skopiuj):
+    * `sfml-graphics-d-2.dll`
+    * `sfml-window-d-2.dll`
+    * `sfml-system-d-2.dll`
+    * `sfml-audio-d-2.dll`
+    * `openal32.dll` (Kluczowe dla dźwięku!)
+3.  Upewnij się, że w tym samym folderze znajduje się folder **`assets`** (z obrazkami i dźwiękami).
