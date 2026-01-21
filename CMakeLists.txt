@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # --- POBIERANIE SFML 2.6.2 ---
-# To zapewnia, że masz tę samą wersję co na Windowsie
 include(FetchContent)
 
 FetchContent_Declare(
@@ -19,24 +18,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(sfml)
 
-# Dodajemy plik wykonywalny (Twój kod)
+# Dodajemy plik wykonywalny
 add_executable(SantaGame main.cpp)
 
 # --- LINKOWANIE ---
-# TU ZMIANA: Dodano sfml-audio
+# Ważne: sfml-audio jest tutaj kluczowe
 target_link_libraries(SantaGame PRIVATE sfml-graphics sfml-window sfml-system sfml-audio)
 
-# --- KOPIOWANIE ZASOBÓW (Fix dla Maca) ---
-# Kopiujemy czcionki, obrazki ORAZ pliki dźwiękowe do folderu z grą
-
-# 1. Znajdź pliki
-file(GLOB ASSETS_FONTS "${CMAKE_CURRENT_SOURCE_DIR}/*.ttf")
-file(GLOB ASSETS_IMGS_PNG "${CMAKE_CURRENT_SOURCE_DIR}/*.png")
-file(GLOB ASSETS_IMGS_JPG "${CMAKE_CURRENT_SOURCE_DIR}/*.jpg")
-# Nowe: Szukamy plików audio (.wav, .ogg, .mp3)
-file(GLOB ASSETS_AUDIO "${CMAKE_CURRENT_SOURCE_DIR}/*.wav" "${CMAKE_CURRENT_SOURCE_DIR}/*.ogg" "${CMAKE_CURRENT_SOURCE_DIR}/*.mp3")
-
-# 2. Skopiuj je
 # --- KOPIOWANIE ZASOBÓW ---
-# Kopiujemy cały folder 'assets' do miejsca, gdzie powstaje gra.
+# To jest jedyna linijka, której potrzebujesz do zasobów.
+# Kopiuje folder "assets" z kodem źródłowym do folderu "build", gdzie powstaje gra.
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/assets" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
