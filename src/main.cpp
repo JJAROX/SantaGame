@@ -117,48 +117,48 @@ int main()
     float glosnosc_ogolna = 50.0f;
 
     sf::Music muzyka_tlo;
-    muzyka_tlo.openFromFile("muzyka_tlo.ogg");
+    muzyka_tlo.openFromFile("../assets/audio/muzyka_tlo.ogg");
     muzyka_tlo.setLoop(true);
     muzyka_tlo.setVolume(glosnosc_ogolna * 0.2f);
     muzyka_tlo.play();
 
     sf::Music muzyka_boss;
-    muzyka_boss.openFromFile("dzwiek_boss.ogg");
+    muzyka_boss.openFromFile("../assets/audio/dzwiek_boss.ogg");
     muzyka_boss.setLoop(true);
     muzyka_boss.setVolume(glosnosc_ogolna * 0.06f);
 
     sf::SoundBuffer buffer_punkt;
-    buffer_punkt.loadFromFile("dzwiek_punkt.ogg");
+    buffer_punkt.loadFromFile("../assets/audio/dzwiek_punkt.ogg");
     sf::Sound dzwiek_punkt;
     dzwiek_punkt.setBuffer(buffer_punkt);
     dzwiek_punkt.setVolume(glosnosc_ogolna * 0.2f);
 
     sf::SoundBuffer buffer_odblokowanie;
-    buffer_odblokowanie.loadFromFile("dzwiek_odblokowanie_poziomu.ogg");
+    buffer_odblokowanie.loadFromFile("../assets/audio/dzwiek_odblokowanie_poziomu.ogg");
     sf::Sound dzwiek_odblokowanie;
     dzwiek_odblokowanie.setBuffer(buffer_odblokowanie);
     dzwiek_odblokowanie.setVolume(glosnosc_ogolna * 0.2f);
 
     sf::SoundBuffer buffer_hitek;
-    buffer_hitek.loadFromFile("dzwiek_hitek.ogg");
+    buffer_hitek.loadFromFile("../assets/audio/dzwiek_hitek.ogg");
     sf::Sound dzwiek_hitek;
     dzwiek_hitek.setBuffer(buffer_hitek);
     dzwiek_hitek.setVolume(glosnosc_ogolna * 0.08f);
 
     sf::SoundBuffer buffer_hitek_grinch;
-    buffer_hitek_grinch.loadFromFile("dzwiek_hitek_grinch.ogg");
+    buffer_hitek_grinch.loadFromFile("../assets/audio/dzwiek_hitek_grinch.ogg");
     sf::Sound dzwiek_hitek_grinch;
     dzwiek_hitek_grinch.setBuffer(buffer_hitek_grinch);
     dzwiek_hitek_grinch.setVolume(glosnosc_ogolna * 0.08f);
 
     sf::SoundBuffer buffer_wygrana;
-    buffer_wygrana.loadFromFile("dzwiek_wygrana.ogg");
+    buffer_wygrana.loadFromFile("../assets/audio/dzwiek_wygrana.ogg");
     sf::Sound dzwiek_wygrana;
     dzwiek_wygrana.setBuffer(buffer_wygrana);
     dzwiek_wygrana.setVolume(glosnosc_ogolna * 0.2f);
 
     sf::SoundBuffer buffer_przegrana;
-    buffer_przegrana.loadFromFile("dzwiek_przegrana.ogg");
+    buffer_przegrana.loadFromFile("../assets/audio/dzwiek_przegrana.ogg");
     sf::Sound dzwiek_przegrana;
     dzwiek_przegrana.setBuffer(buffer_przegrana);
     dzwiek_przegrana.setVolume(glosnosc_ogolna * 0.2f);
@@ -182,7 +182,7 @@ int main()
 
     // tla i skala
     std::vector<sf::Texture> tla;
-    std::vector<std::string> nazwy_tel = { "Europa.png", "Europa_odw.png", "pustynia.png", "pustynia_odw.png", "las.png", "las_odw.png", "arena.jpg", "menu.png" };
+    std::vector<std::string> nazwy_tel = { "../assets/images/Europa.png", "../assets/images/Europa_odw.png", "../assets/images/pustynia.png", "../assets/images/pustynia_odw.png", "../assets/images/las.png", "../assets/images/las_odw.png", "../assets/images/arena.jpg", "../assets/images/menu.png" };
     sf::Texture grafika;
     for (int i = 0; i < nazwy_tel.size(); i++)
     {
@@ -299,19 +299,19 @@ int main()
 
     // tekstura mikolaja
     sf::Texture tekstura_mikolaj;
-    tekstura_mikolaj.loadFromFile("mikolajp1.png");
+    tekstura_mikolaj.loadFromFile("../assets/images/mikolajp1.png");
 
     //czcionka game
     sf::Font czcionka_game;
-    czcionka_game.loadFromFile("ByteBounce.ttf");
+    czcionka_game.loadFromFile("../assets/fonts/ByteBounce.ttf");
 
     //tekstura mikolaj minigierka
     sf::Texture tekstura_mikolajb;
-    tekstura_mikolajb.loadFromFile("mikolajb.png");
+    tekstura_mikolajb.loadFromFile("../assets/images/mikolajb.png");
 
     //tekstura grincha
     sf::Texture tekstura_grinch;
-    tekstura_grinch.loadFromFile("grinch.png");
+    tekstura_grinch.loadFromFile("../assets/images/grinch.png");
 
 
     // ui coinów 
@@ -603,7 +603,7 @@ int main()
     napis_lot.setPosition(szerokosc_okna / 2.0f, wysokosc_okna / 2.5f);
 
     //tekstura prezentu
-    std::vector<std::string> obrazki_prezentow = { "prezent1.png", "prezent2.png", "prezent3.png", "prezent4.png", "prezent5.png", "prezent6.png", "prezent7.png", "prezent8.png" };
+    std::vector<std::string> obrazki_prezentow = { "../assets/images/prezent1.png", "../assets/images/prezent2.png", "../assets/images/prezent3.png", "../assets/images/prezent4.png", "../assets/images/prezent5.png", "../assets/images/prezent6.png", "../assets/images/prezent7.png", "../assets/images/prezent8.png" };
     std::vector<sf::Texture> tekstura_prezentu;
     for (auto& obrazek : obrazki_prezentow)
     {
@@ -616,16 +616,16 @@ int main()
     std::vector<std::vector<sf::Texture>> tekstury_domkow_na_poziomy;
 
     // pierwszy kontynent
-    std::vector<std::string> pliki_p1 = { "dom1.png", "dom2.png", "dom3.png", "dom4.png" };
+    std::vector<std::string> pliki_p1 = { "../assets/images/dom1.png", "../assets/images/dom2.png", "../assets/images/dom3.png", "../assets/images/dom4.png" };
 
     // drugi kontynent
-    std::vector<std::string> pliki_p2 = { "pustynia_dom1.png", "pustynia_dom2.png", "pustynia_dom3.png" };
+    std::vector<std::string> pliki_p2 = { "../assets/images/pustynia_dom1.png", "../assets/images/pustynia_dom2.png", "../assets/images/pustynia_dom3.png" };
 
     // trzeci kontynent
-    std::vector<std::string> pliki_p3 = { "las_dom1.png", "las_dom2.png", "las_dom3.png", "las_dom4.png" };
+    std::vector<std::string> pliki_p3 = { "../assets/images/las_dom1.png", "../assets/images/las_dom2.png", "../assets/images/las_dom3.png", "../assets/images/las_dom4.png" };
 
     // czwarty kontynent ale wsm go nie ma i chyba tylko 3 robimy takze to sie wyjebie najwyzej
-    std::vector<std::string> pliki_p4 = { "dom1.png", "dom2.png", "dom3.png", "dom4.png" };
+    std::vector<std::string> pliki_p4 = { "../assets/images/dom1.png", "../assets/images/dom2.png", "../assets/images/dom3.png", "../assets/images/dom4.png" };
 
     // funkcja do ładowania tekstur
     auto zaladujDomki = [&](std::vector<std::string> pliki)
@@ -651,10 +651,10 @@ int main()
 
     //tekstura sniezki
     sf::Texture tekstura_sniezka;
-    tekstura_sniezka.loadFromFile("sniezka.png");
+    tekstura_sniezka.loadFromFile("../assets/images/sniezka.png");
 
     //tekstury fajerwerek
-    std::vector<std::string> obrazki_fajerwerkow = { "fajerwerek1.png", "fajerwerek2.png", "fajerwerek3.png" };
+    std::vector<std::string> obrazki_fajerwerkow = { "../assets/images/fajerwerek1.png", "../assets/images/fajerwerek2.png", "../assets/images/fajerwerek3.png" };
     std::vector<sf::Texture> tekstury_fajerwerek;
     for (auto& obrazek : obrazki_fajerwerkow)
     {
@@ -665,13 +665,13 @@ int main()
 
     //tekstura wykrzyknika
     sf::Texture tekstura_wykrzyknik;
-    tekstura_wykrzyknik.loadFromFile("wykrzyknik.png");
+    tekstura_wykrzyknik.loadFromFile("../assets/images/wykrzyknik.png");
 
     //tekstury serc
     sf::Texture serce;
     sf::Texture puste_serce;
-    serce.loadFromFile("serce_pelne.png");
-    puste_serce.loadFromFile("serce_puste.png");
+    serce.loadFromFile("../assets/images/serce_pelne.png");
+    puste_serce.loadFromFile("../assets/images/serce_puste.png");
 
     //czasy
     sf::Clock clock;
