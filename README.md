@@ -57,6 +57,7 @@ Gra podzielona jest na dwa główne etapy:
 
 ### ⚠️ Rozwiązywanie problemów na Windows
 
+Bedzie najprawdopodobniej potrzebna instalacja Cmake'a i GIT'a
 Jeśli po uruchomieniu pliku `SantaGame.exe` nic się nie dzieje (konsola znika) lub pojawia się błąd o braku plików `.dll`, musisz ręcznie skopiować biblioteki do folderu z grą.
 
 1.  Wejdź do folderu, gdzie zbudowała się gra (zazwyczaj `build/Debug`).
